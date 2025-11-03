@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+.env
+.env.local
+.env.*.local
+
+# Node / Frontend
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+.next/
+out/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Tauri
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# Android build
+.gradle/
+local.properties
+*.apk
+*.aar
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS specific
+.env.local
+.env.*.local
+
+# Tauri-specific
+src-tauri/tauri.conf.json.bak
+
+# Backend scraping
+Backend/ManualScrape/vku_response.html
+Backend/BrownserUse/student_info.json
