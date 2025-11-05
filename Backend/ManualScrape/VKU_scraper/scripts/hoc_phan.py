@@ -8,12 +8,6 @@ import psycopg2
 # ---------- Cấu hình ----------
 session_file = "session.json"
 target_url = "https://daotao.vku.udn.vn/sv/diem"
-
-DB_HOST = "aws-1-ap-southeast-1.pooler.supabase.com"
-DB_PORT = 6543
-DB_NAME = "postgres"
-DB_USER = "postgres.qbmpjsxpugxvhxkbscvd"
-DB_PASSWORD = "Huytk123*"  # đổi thành password của bạn
 CSV_FILE = "ten_hoc_phan.csv"
 
 # ---------- Session ----------
@@ -83,39 +77,6 @@ def save_to_csv(data, filename=CSV_FILE):
         writer.writeheader()
         writer.writerows(data)
     print(f"💾 Đã lưu {len(data)} môn học vào {filename}")
-
-# ---------- Chèn vào Supabase ----------
-def insert_csv_to_db(csv_file=CSV_FILE):
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
-    cur = conn.cursor()
-    with open(csv_file, newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            diem_t10 = None
-            try:
-                diem_t10 = float(row["Điểm T10"]) if row["Điểm T10"] != "chưa có" else None
-            except:
-                diem_t10 = None
-            cur.execute("""
-                INSERT INTO hoc_phan (ten_hoc_phan, so_tc, diem_t10, hoc_ky)
-                VALUES (%s, %s, %s, %s)
-            """, (
-                row["Tên học phần"],
-                int(row["Số TC"]),
-                diem_t10,
-                row["Học kỳ"]
-            ))
-    conn.commit()
-    cur.close()
-    conn.close()
-    print(f"💾 Đã chèn dữ liệu từ {csv_file} vào bảng hoc_phan")
-
 # ---------- Main ----------
 def main():
     with sync_playwright() as p:
@@ -137,7 +98,6 @@ def main():
 
         data = crawl_diem(page)
         save_to_csv(data)
-        insert_csv_to_db(CSV_FILE)
 
         browser.close()
 
