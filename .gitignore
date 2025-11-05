@@ -85,3 +85,8 @@ src-tauri/tauri.conf.json.bak
 # Backend scraping
 Backend/ManualScrape/vku_response.html
 Backend/BrownserUse/student_info.json
+
+# Chrome user data (for browser automation)
+%LOCALAPPDATA%/Google/Chrome/User Data/
+AppData/Local/Google/Chrome/User Data/
+Backend/BrownserUse/%LOCALAPPDATA%/Google/Chrome/User Data/
