@@ -2,10 +2,22 @@ from playwright.sync_api import sync_playwright
 import json
 import os
 import time
+from playwright.sync_api import sync_playwright
 import csv
 
+# Set UTF-8 encoding for stdout
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+# Get session file path from command line argument or use default
+session_file = sys.argv[1] if len(sys.argv) > 1 else "session.json"
+
+# Ensure directory exists
+session_dir = os.path.dirname(session_file)
+if session_dir and not os.path.exists(session_dir):
+    os.makedirs(session_dir, exist_ok=True)
+
 # ---------- Cấu hình ----------
-session_file = "session.json"
 profile_url = "https://daotao.vku.udn.vn/sv/hoso"
 PROFILE_FILE = "thong_tin_ca_nhan.csv"
 

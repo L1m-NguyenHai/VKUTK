@@ -5,8 +5,9 @@ import { PluginsPage } from "./pages/PluginsPage";
 import { StudentInfoPage } from "./pages/StudentInfoPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SchedulePage } from "./pages/SchedulePage";
+import SessionCapture from "./pages/SessionCapture";
 
-type Page = "plugins" | "info" | "settings" | "schedule";
+type Page = "plugins" | "info" | "settings" | "schedule" | "session";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>("plugins");
@@ -50,6 +51,8 @@ function App() {
         return (
           <SettingsPage isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         );
+      case "session":
+        return <SessionCapture />;
     }
   };
 
