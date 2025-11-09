@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import { LogIn, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 export default function SessionCapture() {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,18 +18,30 @@ export default function SessionCapture() {
     try {
       console.log('Capturing session with path:', scriptPath);
       console.log('Session file path:', sessionPath);
-      const result = await invoke<string>('capture_session', {
-        pythonScriptPath: scriptPath,
-        sessionPath: sessionPath,
+      const response = await fetch(`${API_BASE_URL}/capture-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          python_script_path: scriptPath,
+          session_path: sessionPath,
+        }),
       });
-      console.log('Session capture result:', result);
-      setStatus('success');
-      setMessage(result || 'Session captured successfully!');
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log('Session capture result:', data);
+        setStatus('success');
+        setMessage(data.message || 'Session captured successfully!');
+      } else {
+        setStatus('error');
+        setMessage(data.detail || 'An error occurred while capturing the session.');
+      }
     } catch (error) {
       console.error('Session capture error:', error);
       setStatus('error');
       const errorMessage = error instanceof Error ? error.message : String(error);
-      setMessage(errorMessage || 'An error occurred while capturing the session.');
+      setMessage(errorMessage || 'Failed to connect to API. Make sure FastAPI server is running.');
     } finally {
       setIsLoading(false);
     }
@@ -36,10 +49,15 @@ export default function SessionCapture() {
 
   const handleCheckSession = async () => {
     try {
-      const exists = await invoke<boolean>('check_session_file', {
-        sessionPath: sessionPath,
+      const response = await fetch(`${API_BASE_URL}/check-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_path: sessionPath }),
       });
-      if (exists) {
+
+      const data = await response.json();
+      
+      if (response.ok && data.exists) {
         setStatus('success');
         setMessage('Session file exists! Fetching student information...');
         
@@ -53,25 +71,35 @@ export default function SessionCapture() {
       }
     } catch (error) {
       setStatus('error');
-      setMessage(
-        error instanceof Error ? error.message : 'Error checking session file.'
-      );
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setMessage(errorMessage || 'Failed to connect to API.');
     }
   };
 
   const handleFetchStudentInfo = async () => {
     try {
-      const studentInfoScript = 'd:\\VKUTK\\Backend\\ManualScrape\\VKU_scraper\\scripts\\thong_tin_ca_nhan_api.py';
-      const result = await invoke<Record<string, string>>('fetch_student_info', {
-        pythonScriptPath: studentInfoScript,
-        sessionPath: sessionPath,
+      const studentInfoScript = 'd:\\VKUTK\\Backend\\ManualScrape\\VKU_scraper\\scripts\\thong_tin_ca_nhan.py';
+      const response = await fetch(`${API_BASE_URL}/fetch-student-info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          python_script_path: studentInfoScript,
+          session_path: sessionPath,
+        }),
       });
+
+      const data = await response.json();
       
-      // Store student info in localStorage for StudentInfoPage
-      localStorage.setItem('studentInfo', JSON.stringify(result));
-      
-      setStatus('success');
-      setMessage('Student information fetched successfully! Check the "Thông tin" tab.');
+      if (response.ok && data.data) {
+        // Store student info in localStorage for StudentInfoPage
+        localStorage.setItem('studentInfo', JSON.stringify(data.data));
+        
+        setStatus('success');
+        setMessage('Student information fetched successfully! Check the "Thông tin" tab.');
+      } else {
+        setStatus('error');
+        setMessage(data.detail || 'Failed to fetch student info.');
+      }
     } catch (error) {
       console.error('Fetch student info error:', error);
       setStatus('error');

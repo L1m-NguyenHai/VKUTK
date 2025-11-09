@@ -1,9 +1,12 @@
-from playwright.sync_api import sync_playwright
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import sys
+import io
 import json
 import os
 import time
-from playwright.sync_api import sync_playwright
 import csv
+from playwright.sync_api import sync_playwright
 
 # Set UTF-8 encoding for stdout
 if sys.stdout.encoding != 'utf-8':
@@ -12,77 +15,104 @@ if sys.stdout.encoding != 'utf-8':
 # Get session file path from command line argument or use default
 session_file = sys.argv[1] if len(sys.argv) > 1 else "session.json"
 
-# Ensure directory exists
-session_dir = os.path.dirname(session_file)
-if session_dir and not os.path.exists(session_dir):
-    os.makedirs(session_dir, exist_ok=True)
-
-# ---------- Cấu hình ----------
+# ---------- Configuration ----------
 profile_url = "https://daotao.vku.udn.vn/sv/hoso"
-PROFILE_FILE = "thong_tin_ca_nhan.csv"
 
 # ---------- Session ----------
-def save_session(context):
-    cookies = context.cookies()
-    with open(session_file, "w", encoding="utf-8") as f:
-        json.dump(cookies, f, ensure_ascii=False, indent=2)
-    print("✅ Session saved to", session_file)
-
 def load_session(context):
     if os.path.exists(session_file):
-        with open(session_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        cookies = data["cookies"] if isinstance(data, dict) and "cookies" in data else data
-        context.add_cookies(cookies)
-        print("✅ Session loaded from", session_file)
-        return True
+        try:
+            with open(session_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            cookies = data["cookies"] if isinstance(data, dict) and "cookies" in data else data
+            context.add_cookies(cookies)
+            return True
+        except Exception as e:
+            print(f"Error loading session: {e}", file=sys.stderr)
+            return False
     return False
 
 # ---------- Crawl ----------
 def crawl_thong_tin(page):
-    info = {}
+    info = {
+        "Họ và tên": "Chưa cập nhật",
+        "Mã SV": "Chưa cập nhật",
+        "Lớp": "Chưa cập nhật",
+        "Khóa": "Chưa cập nhật",
+        "Chuyên ngành": "Chưa cập nhật",
+        "Khoa": "Chưa cập nhật"
+    }
     try:
-        info["Họ và tên"] = page.query_selector("div.profile-usertitle-name").inner_text().strip()
-        info["Mã SV"] = page.query_selector("div.profile-usertitle-job").inner_text().replace("MÃ SV:", "").strip()
-        info["Lớp"] = page.query_selector("div.profile-usertitle-job + div").inner_text().replace("LỚP:", "").strip()
-        info["Khóa"] = page.query_selector("div.profile-usertitle-job + div + div").inner_text().replace("KHÓA:", "").strip()
-        info["Chuyên ngành"] = page.query_selector("div.profile-usertitle-job + div + div + div").inner_text().strip()
-        info["Khoa"] = page.query_selector("div.profile-usertitle-job + div + div + div + div").inner_text().strip()
+        name_elem = page.query_selector("div.profile-usertitle-name")
+        if name_elem:
+            info["Họ và tên"] = name_elem.inner_text().strip()
+        
+        job_elem = page.query_selector("div.profile-usertitle-job")
+        if job_elem:
+            info["Mã SV"] = job_elem.inner_text().replace("MÃ SV:", "").strip()
+        
+        class_elem = page.query_selector("div.profile-usertitle-job + div")
+        if class_elem:
+            info["Lớp"] = class_elem.inner_text().replace("LỚP:", "").strip()
+        
+        khoa_elem = page.query_selector("div.profile-usertitle-job + div + div")
+        if khoa_elem:
+            info["Khóa"] = khoa_elem.inner_text().replace("KHÓA:", "").strip()
+        
+        nganh_elem = page.query_selector("div.profile-usertitle-job + div + div + div")
+        if nganh_elem:
+            info["Chuyên ngành"] = nganh_elem.inner_text().strip()
+        
+        faculty_elem = page.query_selector("div.profile-usertitle-job + div + div + div + div")
+        if faculty_elem:
+            info["Khoa"] = faculty_elem.inner_text().strip()
     except Exception as e:
-        print(f"❌ Lỗi khi lấy thông tin: {e}")
+        print(f"Error fetching info: {e}", file=sys.stderr)
     return info
 
-# ---------- Lưu CSV ----------
-def save_profile_to_csv(info, filename=PROFILE_FILE):
-    fieldnames = ["Họ và tên", "Mã SV", "Lớp", "Khóa", "Chuyên ngành", "Khoa"]
-    with open(filename, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerow(info)
-    print(f"💾 Đã lưu thông tin cá nhân vào {filename}")
+def save_profile_to_csv(info):
+    try:
+        with open('profile.csv', 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ["Họ và tên", "Mã SV", "Lớp", "Khóa", "Chuyên ngành", "Khoa"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerow(info)
+    except Exception as e:
+        print(f"Error saving CSV: {e}", file=sys.stderr)
 
 # ---------- Main ----------
 def main():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context()
 
-        if not load_session(context):
+            if not load_session(context):
+                print("Error: Session file not found", file=sys.stderr)
+                sys.exit(1)
+            
             page = context.new_page()
             page.goto(profile_url)
-            print("⚠️ Hãy đăng nhập bằng Google và nhấn Enter sau khi hoàn tất...")
-            input("👉 Sau khi đăng nhập thành công, nhấn Enter để lưu session...")
-            save_session(context)
-        else:
-            page = context.new_page()
-            page.goto(profile_url)
 
-        page.wait_for_selector("div.profile-usertitle", timeout=20000)
-        time.sleep(2)
+            try:
+                page.wait_for_selector("div.profile-usertitle", timeout=20000)
+            except:
+                pass  # Continue even if selector not found
+            
+            time.sleep(2)
 
-        info = crawl_thong_tin(page)
-        save_profile_to_csv(info)
-        browser.close()
+            info = crawl_thong_tin(page)
+            
+            # Output as JSON to stdout for API (MUST be first output)
+            print(json.dumps(info, ensure_ascii=False, indent=2))
+            
+            # Also save to CSV for backward compatibility
+            save_profile_to_csv(info)
+            browser.close()
+            
+    except Exception as e:
+        print(f"Error: {str(e)}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

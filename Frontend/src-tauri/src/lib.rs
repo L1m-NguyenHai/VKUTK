@@ -1,5 +1,4 @@
 use std::process::Command;
-use serde_json::json;
 
 #[tauri::command]
 fn fetch_student_info(python_script_path: String, session_path: String) -> Result<serde_json::Value, String> {
