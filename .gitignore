@@ -90,3 +90,6 @@ Backend/BrownserUse/student_info.json
 %LOCALAPPDATA%/Google/Chrome/User Data/
 AppData/Local/Google/Chrome/User Data/
 Backend/BrownserUse/%LOCALAPPDATA%/Google/Chrome/User Data/
+
+# Playwright session file
+session.json
