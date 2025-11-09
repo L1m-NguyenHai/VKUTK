@@ -1,14 +1,13 @@
 from playwright.sync_api import sync_playwright
 import csv
-import time
 import json
 import os
-import psycopg2
+import time
 
 # ---------- Cấu hình ----------
 session_file = "session.json"
 target_url = "https://daotao.vku.udn.vn/sv/diem"
-CSV_FILE = "ten_hoc_phan.csv"
+CSV_FILE = "diem_tong_ket.csv"
 
 # ---------- Session ----------
 def save_session(context):
@@ -27,62 +26,70 @@ def load_session(context):
         return True
     return False
 
-# ---------- Crawl ----------
-def crawl_diem(page):
-    print("🔍 Đang trích xuất dữ liệu...")
+# ---------- Crawl điểm tổng kết ----------
+def crawl_diem_tong_ket(page):
+    print("🔍 Đang trích xuất điểm tổng kết...")
     rows = page.locator("table tr.even.pointer")
     data = []
-    stt = 1
-    hoc_ky = ""
 
     for i in range(rows.count()):
         row = rows.nth(i)
         cols = row.locator("td")
-        if cols.count() >= 10:
+        if cols.count() == 12:
             try:
-                ten_hp = cols.nth(1).inner_text().strip()
-                if "Học kỳ" in ten_hp:
-                    hoc_ky = ten_hp
+                stt = cols.nth(0).inner_text().strip()
+                hoc_ky = cols.nth(1).inner_text().strip()
+                so_tc_dk = cols.nth(2).inner_text().strip()
+                so_tc_dk_moi = cols.nth(3).inner_text().strip()
+                diem_4 = cols.nth(4).inner_text().strip()
+                diem_10 = cols.nth(5).inner_text().strip()
+                diem_hb = cols.nth(6).inner_text().strip()
+                tc_tl_hk = cols.nth(7).inner_text().strip()
+                xep_loai = cols.nth(8).inner_text().strip()
+                diem_4_tl = cols.nth(9).inner_text().strip()
+                diem_10_tl = cols.nth(10).inner_text().strip()
+                tc_tich_luy = cols.nth(11).inner_text().strip()
+
+                # Bỏ qua dòng nếu không có "Học kỳ"
+                if not hoc_ky.startswith("Học kỳ"):
                     continue
-
-                so_tc = cols.nth(2).inner_text().strip()
-                diem_t10 = cols.nth(8).inner_text().strip()
-
-                # Quy đổi nếu là Học kỳ riêng
-                if "Học kỳ riêng - Quy đổi" in hoc_ky:
-                    diem_t10 = "10"
-
-                # Nếu rỗng thì ghi "chưa có"
-                if not diem_t10:
-                    diem_t10 = "chưa có"
 
                 data.append({
                     "STT": stt,
-                    "Tên học phần": ten_hp,
-                    "Số TC": so_tc,
-                    "Điểm T10": diem_t10,
-                    "Học kỳ": hoc_ky
+                    "Học kỳ": hoc_ky,
+                    "Số TC-ĐK": so_tc_dk,
+                    "Số TC-ĐK Mới": so_tc_dk_moi,
+                    "Điểm 4": diem_4,
+                    "Điểm 10": diem_10,
+                    "Điểm HB": diem_hb,
+                    "TC TL HK": tc_tl_hk,
+                    "Xếp loại": xep_loai,
+                    "Điểm 4 TL": diem_4_tl,
+                    "Điểm 10 TL": diem_10_tl,
+                    "TC Tích lũy": tc_tich_luy
                 })
-                stt += 1
             except Exception as e:
-                print("⚠️ Lỗi khi đọc dòng:", e)
+                print(f"⚠️ Lỗi khi đọc dòng {i}: {e}")
 
-    print(f"✅ Đã lấy {len(data)} môn học.")
+    print(f"✅ Đã lấy {len(data)} học kỳ tổng kết.")
     return data
 
+# ---------- Save CSV ----------
 def save_to_csv(data, filename=CSV_FILE):
-    keys = ["STT", "Tên học phần", "Số TC", "Điểm T10", "Học kỳ"]
+    keys = ["STT","Học kỳ","Số TC-ĐK","Số TC-ĐK Mới","Điểm 4","Điểm 10","Điểm HB","TC TL HK","Xếp loại","Điểm 4 TL","Điểm 10 TL","TC Tích lũy"]
     with open(filename, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=keys)
         writer.writeheader()
         writer.writerows(data)
-    print(f"💾 Đã lưu {len(data)} môn học vào {filename}")
+    print(f"💾 Đã lưu {len(data)} học kỳ vào {filename}")
+
 # ---------- Main ----------
 def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
 
+        # Load hoặc login session
         if not load_session(context):
             page = context.new_page()
             page.goto(target_url)
@@ -96,9 +103,8 @@ def main():
         page.wait_for_selector("table", timeout=20000)
         time.sleep(3)
 
-        data = crawl_diem(page)
+        data = crawl_diem_tong_ket(page)
         save_to_csv(data)
-
         browser.close()
 
 if __name__ == "__main__":
