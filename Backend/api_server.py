@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from playwright.async_api import async_playwright
 import os
 import json
+import subprocess
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -27,8 +28,13 @@ app.add_middleware(
     max_age=3600,
 )
 
-# Configuration
-SESSION_FILE = Path(__file__).parent / "ManualScrape" / "VKU_scraper" / "session.json"
+# Configuration - Save session to Frontend/Sessions folder
+SESSIONS_DIR = Path(__file__).parent.parent / "Frontend" / "Sessions"
+SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+SESSION_FILE = SESSIONS_DIR / "session.json"
+
+# Path to session_get.py script
+SESSION_GET_SCRIPT = Path(__file__).parent / "ManualScrape" / "VKU_scraper" / "session_get.py"
 
 class SessionResponse(BaseModel):
     success: bool
@@ -47,46 +53,58 @@ async def root():
 @app.post("/api/capture-session", response_model=SessionResponse)
 async def capture_session():
     """
-    Launch browser for user to login and capture session
+    Call session_get.py to launch browser and capture session
     """
     try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
-            context = await browser.new_context()
-            
-            # Open VKU login page
-            page = await context.new_page()
-            await page.goto("https://daotao.vku.udn.vn/sv")
-            
-            # Wait for user to login (30 seconds timeout)
-            print("Waiting for user to login...")
-            try:
-                # Wait for navigation or specific element that indicates successful login
-                await page.wait_for_url("**/sv/**", timeout=60000)  # 60 seconds
-                await page.wait_for_timeout(2000)  # Additional 2 seconds for stability
-            except Exception as e:
-                await browser.close()
-                return SessionResponse(
-                    success=False,
-                    message=f"Login timeout or failed: {str(e)}"
-                )
-            
-            # Save session
-            SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
-            await context.storage_state(path=str(SESSION_FILE))
-            
-            await browser.close()
-            
+        # Check if session_get.py exists
+        if not SESSION_GET_SCRIPT.exists():
+            raise FileNotFoundError(f"session_get.py not found at {SESSION_GET_SCRIPT}")
+        
+        print(f"Running session capture script: {SESSION_GET_SCRIPT}")
+        
+        # Run session_get.py as subprocess
+        # Note: We need to modify session_get.py to save to the correct location
+        result = subprocess.run(
+            ["python", str(SESSION_GET_SCRIPT)],
+            cwd=str(SESSION_GET_SCRIPT.parent),
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minutes timeout
+        )
+        
+        print(f"Script output: {result.stdout}")
+        if result.stderr:
+            print(f"Script errors: {result.stderr}")
+        
+        if result.returncode != 0:
+            return SessionResponse(
+                success=False,
+                message=f"Session capture failed: {result.stderr}"
+            )
+        
+        # Check if session.json was created in Frontend/Sessions folder
+        if SESSION_FILE.exists():
             return SessionResponse(
                 success=True,
                 message="Session captured successfully",
                 session_path=str(SESSION_FILE)
             )
+        else:
+            return SessionResponse(
+                success=False,
+                message="Session file was not created"
+            )
             
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except subprocess.TimeoutExpired:
+        print("Session capture timeout")
+        raise HTTPException(status_code=408, detail="Session capture timeout (5 minutes)")
     except Exception as e:
         import traceback
         error_detail = f"Failed to capture session: {str(e)}\n{traceback.format_exc()}"
-        print(error_detail)  # Log to console
+        print(error_detail)
         raise HTTPException(status_code=500, detail=f"Failed to capture session: {str(e)}")
 
 @app.get("/api/check-session", response_model=SessionCheckResponse)
