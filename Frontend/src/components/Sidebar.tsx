@@ -1,6 +1,6 @@
-import { Grid3x3, User, Settings } from "lucide-react";
+import { Grid3x3, User, Settings, LogIn } from "lucide-react";
 
-type Page = "plugins" | "info" | "settings" | "schedule";
+type Page = "plugins" | "info" | "settings" | "schedule" | "session";
 
 interface SidebarProps {
   isDarkMode: boolean;
@@ -73,6 +73,21 @@ export function Sidebar({
           >
             <User className="w-4 h-4" />
             <span>Thông tin</span>
+          </button>
+          <button
+            onClick={() => navigateTo("session")}
+            className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
+              currentPage === "session"
+                ? isDarkMode
+                  ? "bg-gradient-to-r from-purple-900/50 to-pink-900/50 text-purple-300 font-medium shadow-md"
+                  : "bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 font-medium shadow-sm"
+                : isDarkMode
+                ? "text-gray-300 hover:bg-gray-700"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Session</span>
           </button>
           <button
             onClick={() => navigateTo("settings")}
