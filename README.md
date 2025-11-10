@@ -1,8 +1,8 @@
-# VKU VKUTK - Hệ thống Quản lý Thông tin Sinh viên
+# VKU VKUTK - VKU Tools Kit
 
-Ứng dụng desktop (Tauri + React) để quản lý và theo dõi thông tin học tập sinh viên từ hệ thống VKU.
+Ứng dụng desktop (Tauri + React)
 
-## 🎯 Tính năng chính
+## 🎯 Tính năng chính hiện tại
 
 - 📚 **Quản lý Sinh viên** - Lấy và lưu thông tin sinh viên
 - 📊 **Quản lý Điểm** - Theo dõi điểm số các môn học
@@ -58,6 +58,7 @@ Tauri-VKUTK/
 ## 🗄️ Database Schema (Supabase)
 
 ### 📋 Bảng `SinhVien`
+
 ```
 - StudentID (text) - PK
 - ho_va_ten (varchar)
@@ -68,6 +69,7 @@ Tauri-VKUTK/
 ```
 
 ### 📊 Bảng `Diem`
+
 ```
 - id (bigint) - PK
 - StudentID (text) - FK → SinhVien
@@ -78,6 +80,7 @@ Tauri-VKUTK/
 ```
 
 ### 📈 Bảng `TienDoHocTap` (Tạm thời)
+
 ```
 - id (bigint) - PK
 - StudentID (text) - FK → SinhVien
@@ -92,6 +95,7 @@ Tauri-VKUTK/
 ## 🚀 Cách Chạy
 
 ### Prerequisites
+
 - Python 3.10+
 - Node.js 18+
 - pnpm (or npm)
@@ -100,12 +104,14 @@ Tauri-VKUTK/
 ### Backend Setup
 
 1. **Cài dependencies**
+
 ```bash
 cd Backend
 pip install -r requirements.txt
 ```
 
 2. **Config environment**
+
 ```bash
 # Tạo file .env
 cat > .env << EOF
@@ -115,6 +121,7 @@ EOF
 ```
 
 3. **Chạy API server**
+
 ```bash
 python main.py
 # Server chạy tại: http://127.0.0.1:8000
@@ -123,18 +130,21 @@ python main.py
 ### Frontend Setup
 
 1. **Cài dependencies**
+
 ```bash
 cd Frontend
 pnpm install
 ```
 
 2. **Chạy dev server (web)**
+
 ```bash
 pnpm dev
 # Tauri dev server: http://localhost:5173
 ```
 
 3. **Build Tauri app**
+
 ```bash
 pnpm tauri build
 ```
@@ -142,6 +152,7 @@ pnpm tauri build
 ## 📡 API Endpoints
 
 ### Session Management
+
 - `POST /api/capture-session` - Capture browser session
 - `GET /api/check-session` - Kiểm tra session tồn tại
 - `GET /` - Health check
@@ -149,6 +160,7 @@ pnpm tauri build
 ## 🔄 Workflow - Scrape và Lưu Data
 
 ### 1. Scrape Data
+
 ```python
 from Backend.ManualScrape.VKU_scraper.scraper_to_supabase import main
 
@@ -156,12 +168,14 @@ main()  # Chạy scraper
 ```
 
 **Luồng:**
+
 1. Mở browser → Đăng nhập VKU
 2. Lấy thông tin cá nhân → Insert `SinhVien`
 3. Lấy dữ liệu điểm → Insert `Diem`
 4. Lưu session cookies
 
 ### 2. Sử dụng Data
+
 ```python
 from Backend.Supabase import sinh_vien_repo, diem_repo
 
@@ -211,6 +225,7 @@ diem_repo.get_grades_by_semester("Học kỳ 1")
 ### Add New Feature
 
 1. **Tạo function trong folder con**
+
 ```python
 # Backend/ManualScrape/VKU_scraper/new_feature.py
 def scrape_something():
@@ -219,6 +234,7 @@ def scrape_something():
 ```
 
 2. **Gọi từ main.py**
+
 ```python
 # Backend/main.py
 from Backend.ManualScrape.VKU_scraper.new_feature import scrape_something
@@ -230,25 +246,29 @@ async def new_endpoint():
 ```
 
 3. **Frontend gọi API**
+
 ```typescript
 // Frontend/src/pages/SomePage.tsx
 const response = await fetch("http://localhost:8000/api/new-endpoint", {
-    method: "POST"
+  method: "POST",
 });
 ```
 
 ## ⚙️ Config
 
 ### Tauri Configuration
+
 - `Frontend/src-tauri/tauri.conf.json` - Cấu hình app
 
 ### CORS Settings
+
 - Mặc định cho phép: `localhost:1420`, `localhost:5173`, `tauri://localhost`
 - Chỉnh sửa trong `Backend/main.py` → `CORSMiddleware`
 
 ## 🐛 Troubleshooting
 
 ### Lỗi: "SUPABASE_URL và SUPABASE_KEY phải được set"
+
 ```bash
 # Check .env file
 cat Backend/.env
@@ -259,6 +279,7 @@ echo "SUPABASE_KEY=..." >> Backend/.env
 ```
 
 ### Lỗi: Import "Supabase" không tìm thấy
+
 ```python
 # Thêm path vào sys.path
 import sys
@@ -268,6 +289,7 @@ from Supabase import sinh_vien_repo
 ```
 
 ### Session hết hạn
+
 - Xóa `session.json` và chạy lại scraper
 - Sẽ yêu cầu đăng nhập lại
 
