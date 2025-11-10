@@ -19,7 +19,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'ManualScrape/VKU_scrape
 sys.path.append(os.path.join(os.path.dirname(__file__), 'Supabase'))
 
 from hoc_phan import main as scraper_main, session_file
-from DBconnect import supabase_db
+from Supabase import supabase_db
 
 console = Console()
 
