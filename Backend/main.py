@@ -2,11 +2,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+import sys
 import json
 import subprocess
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Any
+
+# Add ManualScrape path
+sys.path.insert(0, str(Path(__file__).parent / "ManualScrape" / "VKU_scraper"))
+
+from scraper import vku_scraper_manager
+from Supabase import sinh_vien_repo, diem_repo
 
 app = FastAPI(title="VKU Session Capture API")
 
@@ -45,6 +52,33 @@ class SessionCheckResponse(BaseModel):
     exists: bool
     path: str
     size: Optional[int] = None
+
+# ==================== SCRAPER RESPONSE MODELS ====================
+
+class ScrapeDataResponse(BaseModel):
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
+class StudentResponse(BaseModel):
+    StudentID: str
+    ho_va_ten: str
+    lop: str
+    khoa: str
+    chuyen_nganh: Optional[str] = None
+    khoa_hoc: Optional[str] = None
+
+class GradeResponse(BaseModel):
+    id: Optional[int] = None
+    StudentID: str
+    TenHocPhan: str
+    SoTC: int
+    DiemT10: Optional[float] = None
+    HocKy: str
+
+class AllStudentsResponse(BaseModel):
+    count: int
+    students: List[Dict[str, Any]]
 
 @app.get("/")
 async def root():
@@ -145,6 +179,87 @@ async def delete_session():
         SESSION_FILE.unlink()
         return {"success": True, "message": "Session deleted"}
     return {"success": False, "message": "Session file not found"}
+
+# ==================== SCRAPER ENDPOINTS ====================
+
+@app.post("/api/scrape-and-sync", response_model=ScrapeDataResponse)
+async def scrape_and_sync():
+    """
+    Scrape dữ liệu từ VKU và đồng bộ vào Supabase
+    """
+    try:
+        result = vku_scraper_manager.scrape_and_sync()
+        
+        return ScrapeDataResponse(
+            success=result.get("success", False),
+            message=result.get("message", ""),
+            data=result.get("data", {})
+        )
+    except Exception as e:
+        print(f"❌ Lỗi: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== STUDENT ENDPOINTS ====================
+
+@app.get("/api/students", response_model=AllStudentsResponse)
+async def get_all_students():
+    """
+    Lấy tất cả sinh viên từ database
+    """
+    try:
+        students = sinh_vien_repo.get_all_students()
+        return AllStudentsResponse(
+            count=len(students),
+            students=students
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/students/{student_id}", response_model=StudentResponse)
+async def get_student(student_id: str):
+    """
+    Lấy thông tin một sinh viên
+    """
+    try:
+        student = sinh_vien_repo.get_student_by_id(student_id)
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
+        return StudentResponse(**student)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/students/{student_id}/grades", response_model=List[GradeResponse])
+async def get_student_grades(student_id: str):
+    """
+    Lấy danh sách điểm của sinh viên
+    """
+    try:
+        grades = diem_repo.get_grades_by_student(student_id)
+        return [GradeResponse(**grade) for grade in grades]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/stats")
+async def get_stats():
+    """
+    Lấy thống kê dữ liệu
+    """
+    try:
+        total_students = sinh_vien_repo.get_total_students_count()
+        faculties = sinh_vien_repo.get_distinct_faculties()
+        majors = sinh_vien_repo.get_distinct_majors()
+        
+        return {
+            "total_students": total_students,
+            "total_faculties": len(faculties),
+            "total_majors": len(majors),
+            "faculties": faculties,
+            "majors": majors
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
