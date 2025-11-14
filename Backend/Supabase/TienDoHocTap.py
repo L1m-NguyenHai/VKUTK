@@ -74,6 +74,16 @@ class TienDoHocTapRepository(BaseRepository):
             print(f"❌ Lỗi khi lấy các môn tự chọn: {e}")
             return []
     
+    def delete_by_student(self, student_id: str) -> bool:
+        """Xóa tất cả bản ghi tiến độ của một sinh viên"""
+        try:
+            self.client.table(self.table_name).delete().eq("StudentID", student_id).execute()
+            print(f"✅ Đã xóa tất cả tiến độ của {student_id}")
+            return True
+        except Exception as e:
+            print(f"❌ Lỗi khi xóa: {e}")
+            return False
+    
     def get_total_credits(self, student_id: str) -> int:
         """Lấy tổng số tín chỉ của sinh viên"""
         try:

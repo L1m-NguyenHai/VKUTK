@@ -1,0 +1,1467 @@
+<!DOCTYPE html><html lang="en" class=" "><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Hệ thống quản lý đào tạo - Trường Đại học CNTT&amp;TT Việt - Hàn</title>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&amp;display=swap" rel="stylesheet">   
+    <!-- Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="https://daotao.vku.udn.vn/vendor/nprogress/nprogress.css" rel="stylesheet">
+    <!-- iCheck -->
+    <link href="https://daotao.vku.udn.vn/vendor/iCheck/skins/flat/green.css" rel="stylesheet">
+	
+    <!-- bootstrap-progressbar -->
+    <link href="https://daotao.vku.udn.vn/vendor/bootstrap-progressbar/css/bootstrap-progressbar-3.3.4.min.css" rel="stylesheet">
+    <!-- JQVMap -->
+    <link href="https://daotao.vku.udn.vn/vendor/jqvmap/dist/jqvmap.min.css" rel="stylesheet">
+    <!-- bootstrap-daterangepicker -->
+    <link href="https://daotao.vku.udn.vn/vendor/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet">
+    <!-- Datatables -->
+    <link href="https://daotao.vku.udn.vn/vendor/datatables.net-bs/css/dataTables.bootstrap.min.css" rel="stylesheet">
+    <link href="https://daotao.vku.udn.vn/vendor/datatables.net-buttons-bs/css/buttons.bootstrap.min.css" rel="stylesheet">
+    <link href="https://daotao.vku.udn.vn/vendor/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css" rel="stylesheet">
+    <link href="https://daotao.vku.udn.vn/vendor/datatables.net-responsive-bs/css/responsive.bootstrap.min.css" rel="stylesheet">
+    <link href="https://daotao.vku.udn.vn/vendor/datatables.net-scroller-bs/css/scroller.bootstrap.min.css" rel="stylesheet">
+    <link href="https://daotao.vku.udn.vn/vendor/google-code-prettify/bin/prettify.min.css" rel="stylesheet">
+	
+    <!-- jquery -->
+    <script type="text/javascript" async="" src="https://www.google-analytics.com/analytics.js"></script><script type="text/javascript" async="" src="https://www.googletagmanager.com/gtag/js?id=G-D00GRL694C&amp;cx=c&amp;gtm=4e5bc1"></script><script src="//ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <!-- Custom Theme Style -->
+    <link href="https://daotao.vku.udn.vn/public/gv/build/css/custom.min.css" rel="stylesheet">
+	<!-- App\Http\Controllers\Admin\AutoController::sv_canhbao() -->
+      <meta name="csrf-token" content="a0AtDorNyD6il8v9czO92g1f1alhcHehT6ORqi6c">
+  </head>
+
+  <body class="nav-md">
+    <div class="container body">
+      <div class="main_container">
+        <div class="col-md-3 left_col">
+          <div class="left_col scroll-view">
+            <div class="navbar nav_title" style="border: 0;">
+              <a href="/" class="site_title"><i class="fa fa-university"></i> <span>VKU!</span></a>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <!-- menu profile quick info -->
+            <div class="profile clearfix">
+              <div class="profile_pic">
+                <img style="max-height:100px" src="https://daotao.vku.udn.vn/uploads/sinhvien/22IT076.jpg" alt="" class="img-circle profile_img">
+              </div>
+              <div class="profile_info">
+                <span>Xin chào,</span>
+				                <h2 title="hainhn.22it@vku.udn.vn 0777543918  ">NGUYỄN HỒNG NGUYÊN HẢI</h2>
+				              </div>
+            </div>
+            <!-- /menu profile quick info -->
+
+            <br>
+
+            <!-- sidebar menu -->
+            <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+              <div class="menu_section active">
+                               <h3>TUẦN HỌC THỨ 15</h3>
+                <ul class="nav side-menu" style="">
+                  
+				    
+                  <li title="hainhn.22it@vku.udn.vn"><a href="#"><i class="fa fa-street-view"></i>Lý lịch sinh viên</a>
+					<ul class="nav child_menu">
+							<li><a href="/sv/hoso"><i class="fa fa-bar-chart"></i>Quản lý lý lịch</a> </li>
+							<li><a href="/sv/tam-tru"><i class="fa fa-user"></i>Khai báo tạm trú</a></li>
+							<!-- <li><a href="/sv/bao-cao-covid" >Cập nhật trạng thái Covid</a></li>
+							<li><a href="/sv/cap-nhat-mui-tiem" >Cập nhật mũi tiêm Vaccine</a> </li>  -->
+						</ul>
+                  </li>
+				  				  
+				  
+				   <li title="hainhn.22it@vku.udn.vn"><a href="#"><i class="fa fa-bookmark"></i>Đăng ký chuyên ngành</a>
+						<ul class="nav child_menu">				
+							<!-- <li><a href="<?php// echo route('sv.dangkyKhaoSatChuyenNganh'); ?>" ><i class="fa fa-bar-chart"></i>Khảo sát đăng ký</a> </li> -->
+							<li><a href="https://daotao.vku.udn.vn/sv/dang-ky-chuyen-nganh"><i class="fa fa-bookmark"></i>Đăng ký chuyên ngành</a> </li>
+							<li><a href="https://daotao.vku.udn.vn/sv/xac-nhan-dang-ky-chuyen-nganh"><i class="fa fa-bookmark"></i>In phiếu Đăng ký chuyên ngành</a> </li>
+							<!-- <li><a href="https://daotao.vku.udn.vn/sv/dang-ky-chuyen-nganh-gcp" ><i class="fa fa-bookmark"></i>Đăng ký Chương Trình Đào tạo Toàn Câu</a> </li> -->
+						</ul>
+				   </li>
+				   
+				  <li class="active"><a href="#"><i class="fa fa-plus-circle"></i>Đăng ký tín chỉ</a>
+				  <ul class="nav child_menu" style="display: block;">
+					  <li><a href="https://daotao.vku.udn.vn/sv/dang-ky-tin-chi"><i class="fa fa-bookmark"></i>Đăng ký khối lượng</a></li>
+					  <li><a href="https://daotao.vku.udn.vn/sv/dang-ky-tin-chi"><i class="fa fa-book"></i>Đăng ký học cải thiện</a></li>
+					  <!-- <li><a href="" ><i class="fa fa-book"></i>Đăng ký học cải thiện</a></li> -->
+					  <li><a href="https://daotao.vku.udn.vn/sv/khao-sat-mo-lop"><i class="fa fa-book"></i>Khảo sát mở lớp</a></li>
+					  <li><a href="https://daotao.vku.udn.vn/sv/phan-luong-dang-ky"><i class="fa fa-bookmark"></i>Phân luồng đăng ký</a></li>
+					  <li class="current-page"><a href="https://daotao.vku.udn.vn/sv/hoc-phan-con-lai"><i class="fa fa-bookmark"></i>Tiến độ học tập</a></li>
+					  <!--<li><a href="https://daotao.vku.udn.vn/sv/xac-nhan-hoc" ><i class="fa fa-book"></i>Xác nhận khối lượng</a></li>-->
+				  </ul>  
+                  
+                  </li>
+				   <li><a href="#"><i class="fa fa-calendar"></i>Thời khóa biểu</a>
+				  <ul class="nav child_menu">
+					 
+                  <li><a href="https://daotao.vku.udn.vn/sv/tkb"><i class="fa fa-clock-o"></i>Lịch học theo tuần</a>
+                  </li><li><a href="https://daotao.vku.udn.vn/sv/lich-hoc"><i class="fa fa-calendar-o"></i>Lịch học chi tiết</a>
+                  </li><li><a href="https://daotao.vku.udn.vn/sv/lich-thi"><i class="fa fa-calendar-o"></i>Lịch thi</a>
+                  </li><li><a href="https://daotao.vku.udn.vn/sv/thoi-khoa-bieu"><i class="fa fa-calendar-o"></i>Thời khóa biểu toàn khóa</a>
+				  
+				  
+				  </li></ul>
+				  
+                  </li>
+				   <li><a href="#"><i class="fa fa-inbox"></i>Lớp học phần</a>
+				    <ul class="nav child_menu">
+					 <li><a href="https://daotao.vku.udn.vn/sv/lop-hoc-phan"><i class="fa fa-table"></i> Lớp học phần</a></li>
+					 <li><a href="http://elearning.vku.udn.vn/my/"><i class="fa fa-university"></i>Truy cập Elearning</a></li>
+                    </ul>
+                  </li>
+				  
+				  <li><a href="https://daotao.vku.udn.vn/sv/do-an-cua-toi"><i class="fa fa-calendar"></i>Lớp đồ án</a>
+                  </li>
+				  
+				   
+				  <li><a href="#"><i class="fa fa-print"></i>Kết quả học tập</a>
+				    <ul class="nav child_menu">
+					
+					 <li><a href="https://daotao.vku.udn.vn/sv/diem"><i class="fa fa-bookmark"></i>Điểm học phần</a></li>
+					 <li><a href="https://daotao.vku.udn.vn/sv/xet-hoc-vu/ky-hoc?"><i class="fa fa-user"></i>Kết quả xét học vụ</a></li>
+					 <li><a href="https://daotao.vku.udn.vn/sv/chung-chi?"><i class="fa fa-user"></i>Chứng chỉ tốt nghiệp</a></li>
+					</ul>
+					</li>
+					<li><a href="#"><i class="fa fa-print"></i>Kết quả rèn luyện</a>
+				    <ul class="nav child_menu">
+						<li><a href="/sv/danh-gia"><i class="fa fa-user"></i>SV tự đánh giá</a></li>
+												<!--<li><a href="#" ><i class="fa fa-user"></i>Kết quả đánh giá</a></li>-->
+					</ul>
+					</li>
+					<li><a href="https://docs.google.com/forms/d/e/1FAIpQLSeE7fbsU1OJP2bff8nz-yq9rIQ5Aak7u9VrTcly2jxalrNI8w/viewform"><i class="fa fa-commenting"></i>Đăng ký nhận bảng điểm học tập</a>
+					</li>
+					<li><a href="https://docs.google.com/forms/d/e/1FAIpQLSeiey-hyIjTfJnsUCP0EWA5sUHN4gOiD4EEhqRz9riLkDDH7A/viewform"><i class="fa fa-commenting"></i>Đăng ký nhận giấy xác nhận sinh viên</a>
+					</li>
+				  <li><a href="#"><i class="fa fa-money"></i>Học phí</a>
+				    <ul class="nav child_menu">			
+				    <li><a href="https://daotao.vku.udn.vn/sv/qr-hoc-phi"><i class="fa fa-credit-card"></i>Thu học phí qua QRcode</a></li>	
+					  <li><a href="https://daotao.vku.udn.vn/sv/hoc-phi"><i class="fa fa-credit-card"></i>Học phí đã nộp</a></li>
+					  <li><a href="https://daotao.vku.udn.vn/sv/hoc-phi-sap-nop"><i class="fa fa-book"></i>Học phí sắp tới</a></li>
+					</ul>
+					</li>
+				  
+				  <li><a href="#"><i class="fa fa-commenting"></i>Khảo sát ý kiến</a>
+				    <ul class="nav child_menu">
+												<!--<li><a href="" ><i class="fa fa-folder-open-o"></i>Khảo sát mở lớp</a> </li>-->
+						<li><a href="https://daotao.vku.udn.vn/sv/diem"><i class="fa fa-users"></i>Đánh giá lớp học phần</a> </li>
+						<li><a href="https://daotao.vku.udn.vn/sv/khao-sat-viec-lam"><i class="fa fa-table"></i>Khảo sát việc làm thêm</a> </li>
+						<li><a href="/sv/khao-sat/lam-khao-sat/khao-sat-chat-luong-hoat-dong-phuc-vu-dao-tao"><i class="fa fa-book"></i>Chất lượng phục vụ</a> </li>
+						<li><a href="/sv/khao-sat/lam-khao-sat/khao-sat-thiet-bi-phuc-vu-hoc-tap"><i class="fa fa-book"></i>Thiết bị phục vụ học</a> </li>
+					</ul>
+					</li>
+					<li><a href="#"><i class="fa fa-phone"></i>Danh bạ điện thoại</a>
+				    <ul class="nav child_menu">
+                  <li><a href="https://daotao.vku.udn.vn/sv/lienheGV"><i class="fa fa-users"></i>Liên hệ Giảng viên</a></li>
+                  <li><a href="https://daotao.vku.udn.vn/sv/lienheSV"><i class="fa fa-phone"></i>Danh bạ sinh viên</a></li>
+				  </ul>
+				  </li>
+				 
+				  
+                
+                </ul>
+              </div>
+            </div>
+            <!-- /sidebar menu -->
+			<div class="sidebar-footer hidden-small">
+              <a data-toggle="tooltip" data-placement="top" title="" data-original-title="Tùy chỉnh">
+                <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+              </a>
+              <a data-toggle="tooltip" data-placement="top" title="" onclick="openFullscreen()" data-original-title="FullScreen">
+                <span class="glyphicon glyphicon-fullscreen" aria-hidden="true"></span>
+              </a>
+              <a data-toggle="tooltip" data-placement="top" href="/sv/quanlylop" title="" data-original-title="Nhập vai trò quản lý lớp">
+                <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+              </a>
+              <a data-toggle="tooltip" data-placement="top" title="" href="/sv/logout" data-original-title="Thoát">
+                <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
+              </a>
+            </div>
+            
+            <!-- /menu footer buttons -->
+          </div>
+        </div>
+
+        <!-- top navigation -->
+        <div class="top_nav">
+          <div class="nav_menu">
+            <nav>
+
+              <div class="nav toggle">
+                <a id="menu_toggle"><i class="fa fa-bars"></i></a>
+              </div>
+
+              <ul class="nav navbar-nav navbar-right">
+                <li class="">
+                  <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    <img src="https://daotao.vku.udn.vn/uploads/sinhvien/22IT076.jpg" alt="">NGUYỄN HỒNG NGUYÊN HẢI - 22IT076
+                    <!-- <span class=" fa fa-angle-down"></span> -->
+                  </a>
+                  
+                  <ul class="dropdown-menu dropdown-usermenu pull-right">
+                  
+                    <li><a href="/sv/logout/"><i class="fa fa-sign-out pull-right"></i> Thoát</a></li>
+                  </ul>
+                  
+                </li>
+				
+				<li class="">
+                  <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    Học kỳ 1 - 2025-2026                    <span class=" fa fa-angle-down"></span> 
+                  </a>
+                  
+                   <ul class="dropdown-menu dropdown-usermenu pull-right" onclick="event.stopPropagation()" style="min-width: 420px;">
+                  <li>
+				  						<div class="row" style="padding-top:10px;">
+							<div class="col-xs-1"></div>
+							<div class="col-xs-4">
+								<div class="form-group">
+									<label for="hocky" class="control-label">Học kỳ:</label>
+									<select name="hocky" id="hocky" class="form-control">
+										  										  										  										  											  <option selected="" value="1">Học kỳ 1</option>
+											  <option value="2">Học kỳ 2</option>
+											  <option value="3">Học kỳ hè</option>
+									</select>
+								</div>
+							</div>
+							<div class="col-xs-4">
+								<div class="form-group">
+									<label for="namhoc" class="control-label">Năm học:</label>
+									<select class="namhoc form-control col-md-5" id="namhoc">
+									 																											  $namhientai = "";
+																		<option value="1">
+									  2017 - 2018
+									</option>
+								  																											  $namhientai = "";
+																		<option value="2">
+									  2018 - 2019
+									</option>
+								  																											  $namhientai = "";
+																		<option value="3">
+									  2019 - 2020
+									</option>
+								  																																																						  $namhientai = "";
+																		<option value="4">
+									  2020 - 2021
+									</option>
+								  																																													  $namhientai = "";
+																		<option value="5">
+									  2021 - 2022
+									</option>
+								  																																				  $namhientai = "";
+																		<option value="6">
+									  2022 - 2023
+									</option>
+								  																																													  $namhientai = "";
+																		<option value="7">
+									  2023 - 2024
+									</option>
+								  																																																						  $namhientai = "";
+																		<option value="8">
+									  2024 - 2025
+									</option>
+								  																																																															<option selected="" value="9">
+									  2025 - 2026
+									</option>
+								  																																													  $namhientai = "";
+																		<option value="10">
+									  2026 - 2027
+									</option>
+								  																										  </select>
+								</div>
+							</div>
+							
+							<div class="col-xs-3 nopadding-left">
+								<label class="control-label"></label>
+								<div class="form-control-static">
+									<script>
+									function changehocky(){
+										namhoc = $('#namhoc').val();
+										hocky = $('#hocky').val();
+										window.location.assign("/gv/doi-hoc-ky?namhoc="+namhoc+"&hocky="+hocky);
+									}
+									</script>
+									<button type="button" class="btn btn-primary" onclick="changehocky()">OK</button>
+								</div>
+							</div>
+						</div>
+					</li>
+                  </ul>
+                </li>
+				</ul>
+            </nav>
+          </div>
+        </div>
+        <!-- /top navigation -->
+
+        <!-- page content -->
+
+          <!-- top tiles -->
+        <div class="right_col" role="main" style="min-height: 988px;">
+          <div class="">
+            <div class="row">
+				<div class="" role="main">
+            		    
+	
+		<button style="display:none" data-toggle="modal" data-target="#myChoice" type="button" class="btnView btn-light">Xem</button>
+	
+	<div class="col-md-8 col-sm-8 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Lộ trình học của Chương trình CTĐT Công nghệ thông tin (Kỹ sư) -  Chuyên ngành Kỹ thuật phần mềm 2022
+                    </h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <p></p>
+
+                    <div class="table-responsive" style="height:750px;">
+                        <table class="table table-striped jambo_table bulk_action">
+                            <thead>
+                            <tr class="headings">
+                                <th class="column-title"># </th>
+                                <th class="column-title">Tên học phần</th>
+                                <th class="column-title">Học kỳ</th>
+                                <th class="column-title">Học phần bắt buộc</th>
+                                <th class="column-title">Số TC</th>
+                                <th class="column-title">Tình trạng</th>
+                                
+                            </tr>
+                            </thead>
+
+                            <tbody>
+                            							
+                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">1</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh 1</td>
+                                    <td class=" ">1</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">2</td>
+                                    
+                                    
+                                    <td class=" ">Nhập môn ngành và kỹ năng mềm IT</td>
+                                    <td class=" ">1</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">3</td>
+                                    
+                                    
+                                    <td class=" ">Tin học đại cương</td>
+                                    <td class=" ">1</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">4</td>
+                                    
+                                    
+                                    <td class=" ">Cơ sở dữ liệu</td>
+                                    <td class=" ">1</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>2</code><br>Điểm chữ: <code>C</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">5</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình hướng đối tượng</td>
+                                    <td class=" ">1</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">6</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh chuyên ngành 1 IT</td>
+                                    <td class=" ">1</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">7</td>
+                                    
+                                    
+                                    <td class=" ">Giải tích 1</td>
+                                    <td class=" ">1</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">8</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh 2</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">9</td>
+                                    
+                                    
+                                    <td class=" ">Cấu trúc dữ liệu và giải thuật</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">10</td>
+                                    
+                                    
+                                    <td class=" ">Thiết kế web</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">11</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình Java</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">12</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án cơ sở 1</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">13</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh chuyên ngành 2</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">14</td>
+                                    
+                                    
+                                    <td class=" ">Đại số tuyến tính</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">15</td>
+                                    
+                                    
+                                    <td class=" ">Khởi nghiệp và đổi mới sáng tạo</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">16</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Hàn 1</td>
+                                    <td class=" ">2</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">17</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh 3</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">18</td>
+                                    
+                                    
+                                    <td class=" ">Phân tích và thiết kế hệ thống</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">19</td>
+                                    
+                                    
+                                    <td class=" ">Công nghệ và lập trình web</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">20</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án cơ sở 2 IT</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">21</td>
+                                    
+                                    
+                                    <td class=" ">Kiến trúc máy tính</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">22</td>
+                                    
+                                    
+                                    <td class=" ">Vật lý</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">23</td>
+                                    
+                                    
+                                    <td class=" ">Mạng máy tính</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">24</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Hàn 2</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">25</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh nâng cao 1</td>
+                                    <td class=" ">3</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">26</td>
+                                    
+                                    
+                                    <td class=" ">Thực tập thực tế (IT)</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">27</td>
+                                    
+                                    
+                                    <td class=" ">Giải tích 2</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">28</td>
+                                    
+                                    
+                                    <td class=" ">Xác suất thống kê</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">29</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình di động</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">30</td>
+                                    
+                                    
+                                    <td class=" ">Vi điều khiển</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">31</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án cơ sở 3</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">32</td>
+                                    
+                                    
+                                    <td class=" ">Toán rời rạc</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">33</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh nâng cao 2</td>
+                                    <td class=" ">4</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">34</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh nâng cao 3</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">35</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình mạng</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">36</td>
+                                    
+                                    
+                                    <td class=" ">Trí tuệ nhân tạo</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">37</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án cơ sở 4 (IT) 2TC</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">38</td>
+                                    
+                                    
+                                    <td class=" ">Công nghệ phần mềm</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">39</td>
+                                    
+                                    
+                                    <td class=" ">Nguyên lý hệ điều hành</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">40</td>
+                                    
+                                    
+                                    <td class=" ">Linux và phần mềm nguồn mở</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">41</td>
+                                    
+                                    
+                                    <td class=" ">Chuyên đề 1 (IT)</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">42</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình hệ thống</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">43</td>
+                                    
+                                    
+                                    <td class=" ">Đồ họa máy tính</td>
+                                    <td class=" ">5</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">44</td>
+                                    
+                                    
+                                    <td class=" ">Tiếng Anh nâng cao 4</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">45</td>
+                                    
+                                    
+                                    <td class=" ">Triết học Mác - Lênin</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">46</td>
+                                    
+                                    
+                                    <td class=" ">Pháp luật đại cương</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">47</td>
+                                    
+                                    
+                                    <td class=" ">Automat và Ngôn ngữ hình thức</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">48</td>
+                                    
+                                    
+                                    <td class=" ">Phân tích và thiết kế giải thuật</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">49</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án chuyên ngành 1 (IT) </td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">50</td>
+                                    
+                                    
+                                    <td class=" ">Chuyên đề 2</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">51</td>
+                                    
+                                    
+                                    <td class=" ">Học máy</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">52</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình Game</td>
+                                    <td class=" ">6</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">53</td>
+                                    
+                                    
+                                    <td class=" ">Thực tập doanh nghiệp (IT)</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">54</td>
+                                    
+                                    
+                                    <td class=" ">Kho dữ liệu</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">55</td>
+                                    
+                                    
+                                    <td class=" ">Xử lý ngôn ngữ tự nhiên</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">56</td>
+                                    
+                                    
+                                    <td class=" ">Kinh tế chính trị Mác - Lênin</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>4</code><br>Điểm chữ: <code>A</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">57</td>
+                                    
+                                    
+                                    <td class=" ">Chủ nghĩa xã hội khoa học</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">58</td>
+                                    
+                                    
+                                    <td class=" ">Chương trình dịch</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">59</td>
+                                    
+                                    
+                                    <td class=" ">Đảm bảo chất lượng và kiểm thử phần mềm</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">60</td>
+                                    
+                                    
+                                    <td class=" ">Điện toán đám mây</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td>Điểm chữ: <code>F</code><br></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">61</td>
+                                    
+                                    
+                                    <td class=" ">Chuyên đề 3</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">62</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án chuyên ngành 2_IT</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">63</td>
+                                    
+                                    
+                                    <td class=" ">Phát triển ứng dụng di động đa nền tảng</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">64</td>
+                                    
+                                    
+                                    <td class=" ">Học sâu</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">65</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình C++</td>
+                                    <td class=" ">7</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">66</td>
+                                    
+                                    
+                                    <td class=" ">Thị giác máy tính</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">67</td>
+                                    
+                                    
+                                    <td class=" ">Tư tưởng Hồ Chí Minh</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">68</td>
+                                    
+                                    
+                                    <td class=" ">Lịch sử Đảng Cộng sản Việt Nam</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">69</td>
+                                    
+                                    
+                                    <td class=" ">Quản trị dự án phần mềm</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">70</td>
+                                    
+                                    
+                                    <td class=" ">Chuyên đề 4</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">71</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án chuyên ngành 3</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>1</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">72</td>
+                                    
+                                    
+                                    <td class=" ">Bảo mật và An toàn hệ thống thông tin</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">73</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình Python</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td>Điểm T4:&nbsp;&nbsp;&nbsp;<code>3</code><br>Điểm chữ: <code>B</code><br></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">74</td>
+                                    
+                                    
+                                    <td class=" ">Lập trình C#</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><code>HP Tự chọn</code></td>
+									
+                                    <td class=" "><b><code>3</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="background: #DDD" class="pointer">
+                                    <td align="center" class=" ">75</td>
+                                    
+                                    
+                                    <td class=" ">Thiết kế UX/UI</td>
+                                    <td class=" ">8</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>2</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">76</td>
+                                    
+                                    
+                                    <td class=" ">Thực tập tốt nghiệp (IT)</td>
+                                    <td class=" ">9</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>4</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            							                                <tr style="" class="pointer">
+                                    <td align="center" class=" ">77</td>
+                                    
+                                    
+                                    <td class=" ">Đồ án tốt nghiệp (IT)</td>
+                                    <td class=" ">9</td>
+                                    <td class=" "><input disabled="" checked="" class="form-check-input" type="checkbox" value=""></td>
+									
+                                    <td class=" "><b><code>10</code></b></td>
+                                    
+									<td><button class="btn btn-warning">Chưa học</button></td>
+                                </tr>
+								                            								
+                            </tbody>
+                        </table>
+						</div>
+                </div>
+						<table class="table table-striped jambo_table bulk_action">
+						<tbody><tr style="background: yellow">
+									<td></td>
+									<td colspan="3"><b>Tổng tín chỉ cần hoàn thành</b></td>
+									<td><code>160 TC</code></td>
+									<td>
+									
+									</td>
+									
+								</tr>
+						<tr style="background: yellow">
+									<td></td>
+									                            <td>Số TC bắt buộc: <strong>154</strong></td>
+                            <td>Số TC tự chọn: <strong>6</strong></td>
+									
+									<td>
+									
+									</td>
+									<td></td>
+									
+									<td></td>
+									
+								</tr>
+                            </tbody>
+                        </table>
+                    
+            </div>
+        </div>
+		
+		        
+<script src="https://code.jquery.com/jquery-1.11.1.min.js" type="text/javascript"></script>
+<script src="https://code.jquery.com/ui/1.11.1/jquery-ui.min.js" type="text/javascript"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+
+       <script>
+			(function ($) {
+	
+			$("input:radio").click(function () {
+				$(".btnNhom").attr("disabled", null);
+			});
+
+			 $('.btnNhom').click(function () {
+				 
+				  event.preventDefault();
+				  this.blur(); 
+				  
+				  $(".modal-body").html("<div style='text-align:center'><img align='center' src='https://daotao.vku.udn.vn/images/popup/loading.gif' style='width:64px;z-index:1000;margin-left:50%' /></div>");
+				  nhom = $('input[name=nhom]:checked').val();
+				  $.get("/sv/chon?id="+nhom, function(html) {
+				
+					  $(".modal-body").html(html);
+					  $(".btnView").click();
+					  
+				  });
+			}); 
+			 $('.xem').click(function () {
+				event.preventDefault();
+				this.blur(); 
+				$(".modal-body").html("<img src='https://daotao.vku.udn.vn/images/popup/loading.gif' style='width:64px;z-index:1000;margin-left:50%' />");
+				idhocphan = $(this).data("id");
+				$(".btnView").click();
+				$.get("/sv/xem-chi-tiet?id="+idhocphan, function(html) {
+				  $(".modal-body").html(html);
+				  
+			  });
+				 
+		});
+		})(jQuery);
+		</script>
+<style>
+.ui-dialog {min-width: 700px }
+@media (max-width: 768px){
+	.modal-body {padding:1px !important; overflow: scroll;}
+	.modal-dialog {
+		width: 100% !important;
+		margin: 30px auto;
+	}
+}
+</style>
+
+
+<div id="loading" style="display:none; position: fixed; width: 100%; background: #FFF; height: 100%;  z-index:10000 !important; top:0px; left:0px">
+	<img src="https://daotao.vku.udn.vn/images/popup/loading.gif" style="top: 50%; left: 60%; position:fixed; margin-top: -100px; margin-left: -250px; width:96px;">
+	</div>
+	
+		
+				
+				</div>
+            </div>
+          </div>
+        </div>
+        <!-- /page content -->
+
+        
+          
+        
+      </div>
+    </div>
+	<!-- footer content -->
+	<footer>
+		<div class="pull-right">
+			©Bản quyền thuộc về <a href="//daotao.vku.udn.vn">Trường ĐH CNTT&amp;TT Việt - Hàn</a> - Đại học Đà Nẵng
+		</div>
+		<div class="clearfix"></div>
+	</footer>
+	<!-- /footer content -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <!-- Bootstrap -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <!-- FastClick -->
+    <script src="https://daotao.vku.udn.vn/vendor/fastclick/lib/fastclick.js"></script>
+    <!-- NProgress -->
+    <script src="https://daotao.vku.udn.vn/vendor/nprogress/nprogress.js"></script>
+    <!-- Chart.js -->
+    <script src="https://daotao.vku.udn.vn/vendor/Chart.js/dist/Chart.min.js"></script>
+    <!-- gauge.js -->
+    <script src="https://daotao.vku.udn.vn/vendor/gauge.js/dist/gauge.min.js"></script>
+    <!-- bootstrap-progressbar -->
+    <script src="https://daotao.vku.udn.vn/vendor/bootstrap-progressbar/bootstrap-progressbar.min.js"></script>
+    <!-- iCheck -->
+    <script src="https://daotao.vku.udn.vn/vendor/iCheck/icheck.min.js"></script>
+    <!-- Skycons -->
+    <script src="https://daotao.vku.udn.vn/vendor/skycons/skycons.js"></script>
+    <!-- Flot -->
+    <script src="https://daotao.vku.udn.vn/vendor/Flot/jquery.flot.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/Flot/jquery.flot.pie.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/Flot/jquery.flot.time.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/Flot/jquery.flot.stack.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/Flot/jquery.flot.resize.js"></script>
+    <!-- Flot plugins -->
+    <script src="https://daotao.vku.udn.vn/vendor/flot.orderbars/js/jquery.flot.orderBars.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/flot-spline/js/jquery.flot.spline.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/flot.curvedlines/curvedLines.js"></script>
+    <!-- DateJS -->
+    <script src="https://daotao.vku.udn.vn/vendor/DateJS/build/date.js"></script>
+    <!-- JQVMap -->
+    <script src="https://daotao.vku.udn.vn/vendor/jqvmap/dist/jquery.vmap.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/jqvmap/dist/maps/jquery.vmap.world.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/jqvmap/examples/js/jquery.vmap.sampledata.js"></script>
+    <!-- bootstrap-daterangepicker -->
+    <script src="https://daotao.vku.udn.vn/vendor/moment/min/moment.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/bootstrap-daterangepicker/daterangepicker.js"></script>
+    <!-- Datatables -->
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-buttons/js/dataTables.buttons.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-buttons/js/buttons.flash.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-buttons/js/buttons.html5.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-buttons/js/buttons.print.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-keytable/js/dataTables.keyTable.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-responsive-bs/js/responsive.bootstrap.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/datatables.net-scroller/js/dataTables.scroller.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/jszip/dist/jszip.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/pdfmake/build/pdfmake.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/pdfmake/build/vfs_fonts.js"></script>
+
+    <script src="https://daotao.vku.udn.vn/vendor/bootstrap-wysiwyg/js/bootstrap-wysiwyg.min.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/jquery.hotkeys/jquery.hotkeys.js"></script>
+    <script src="https://daotao.vku.udn.vn/vendor/google-code-prettify/src/prettify.js"></script>
+
+    <!-- Custom Theme Scripts -->
+    <script src="https://daotao.vku.udn.vn/public/gv/build/js/custom.min.js"></script>
+
+    
+
+	<!-- Load Facebook SDK for JavaScript -->
+	    
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-118234607-2"></script>
+<script>
+var elem = document.documentElement;
+function openFullscreen() {
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) { /* Safari */
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { /* IE11 */
+    elem.msRequestFullscreen();
+  }
+}
+
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-118234607-2');
+</script>
+	
+  
+
+</body></html>

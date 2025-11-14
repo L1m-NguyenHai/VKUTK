@@ -1,8 +1,8 @@
-# VKU VKUTK - VKU Tools Kit
+# VKU VKUTK - Hệ thống Quản lý Thông tin Sinh viên
 
-Ứng dụng desktop (Tauri + React)
+Ứng dụng desktop (Tauri + React) để quản lý và theo dõi thông tin học tập sinh viên từ hệ thống VKU.
 
-## 🎯 Tính năng chính hiện tại
+## 🎯 Tính năng chính
 
 - 📚 **Quản lý Sinh viên** - Lấy và lưu thông tin sinh viên
 - 📊 **Quản lý Điểm** - Theo dõi điểm số các môn học

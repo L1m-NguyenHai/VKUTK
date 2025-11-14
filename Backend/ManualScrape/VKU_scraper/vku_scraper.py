@@ -7,6 +7,7 @@ from playwright.sync_api import sync_playwright, Page, BrowserContext
 import json
 import os
 import time
+import re
 from typing import Dict, List, Optional, Any
 
 # ---------- Session Management ----------
@@ -161,6 +162,116 @@ def crawl_student_grades(page: Page) -> List[Dict[str, Any]]:
         print(f"❌ Lỗi khi lấy điểm: {e}")
         return []
 
+# ---------- Crawl Tiến độ học tập ----------
+
+def crawl_tien_do_hoc_tap(page: Page) -> List[Dict[str, Any]]:
+    """
+    Lấy tiến độ học tập (lộ trình học của sinh viên)
+    
+    HTML Structure:
+    <tr>
+      <td>#STT</td>                               # Cột 0
+      <td>Tên học phần</td>                      # Cột 1
+      <td>Học kỳ</td>                            # Cột 2
+      <td>Bắt buộc (checkbox hoặc <code>HP Tự chọn</code>)</td>  # Cột 3
+      <td>Số TC (in <b><code>N</code></b>)</td>  # Cột 4
+      <td>Tình trạng + Điểm</td>                 # Cột 5
+    </tr>
+    
+    Returns:
+        [
+            {
+                "TenHocPhan": "...",
+                "HocKy": "1",
+                "BatBuoc": 1 or 0,
+                "SoTC": "3",
+                "DiemT4": 4 (int) hoặc None,
+                "DiemChu": "A" hoặc None
+            },
+            ...
+        ]
+    """
+    print("🔍 Đang trích xuất dữ liệu tiến độ học tập...")
+    
+    try:
+        page.wait_for_selector("table.jambo_table tbody tr", timeout=20000)
+        time.sleep(2)
+        
+        rows = page.locator("table.jambo_table tbody tr")
+        data = []
+        
+        for i in range(rows.count()):
+            try:
+                row = rows.nth(i)
+                cols = row.locator("td")
+                
+                if cols.count() < 6:
+                    continue
+                
+                # Cột 1: Tên học phần
+                ten_hp = cols.nth(1).inner_text().strip()
+                if not ten_hp:
+                    continue
+                
+                # Cột 2: Học kỳ
+                hoc_ky = cols.nth(2).inner_text().strip()
+                
+                # Cột 3: Bắt buộc (checkbox hoặc <code>HP Tự chọn</code>)
+                col3_html = cols.nth(3).inner_html()
+                if "HP Tự chọn" in col3_html:
+                    bat_buoc = 0  # HP tự chọn = không bắt buộc
+                else:
+                    # Kiểm tra checkbox
+                    checkbox_elem = cols.nth(3).locator("input[type='checkbox'][checked]")
+                    bat_buoc = 1 if checkbox_elem.count() > 0 else 0
+                
+                # Cột 4: Số TC (loại bỏ HTML tags)
+                so_tc_html = cols.nth(4).inner_html()
+                so_tc = re.sub(r'<[^>]+>', '', so_tc_html).strip()
+                
+                # Cột 5: Tình trạng + Điểm
+                status_html = cols.nth(5).inner_html()
+                status_text = cols.nth(5).inner_text().strip()
+                
+                diem_t4 = None
+                diem_chu = None
+                
+                if "Chưa học" not in status_text and "Chưa học" not in status_html:
+                    # Đã học - extract điểm
+                    
+                    # Extract DiemT4 - tìm số trong <code> sau "Điểm T4"
+                    t4_match = re.search(r'Điểm T4:.*?<code>(\d+)</code>', status_html, re.DOTALL)
+                    if t4_match:
+                        try:
+                            diem_t4 = int(t4_match.group(1))
+                        except:
+                            diem_t4 = None
+                    
+                    # Extract DiemChu - tìm A-F trong <code> sau "Điểm chữ"
+                    chu_match = re.search(r'Điểm chữ:\s*<code>([A-F])</code>', status_html)
+                    if chu_match:
+                        diem_chu = chu_match.group(1)
+                
+                data.append({
+                    "TenHocPhan": ten_hp,
+                    "HocKy": hoc_ky,
+                    "BatBuoc": bat_buoc,
+                    "SoTC": so_tc,
+                    "DiemT4": diem_t4,
+                    "DiemChu": diem_chu
+                })
+                
+            except Exception as e:
+                print(f"⚠️ Lỗi khi đọc dòng {i}: {e}")
+                continue
+        
+        print(f"✅ Đã lấy {len(data)} học phần tiến độ học tập.")
+        return data
+        
+    except Exception as e:
+        print(f"❌ Lỗi khi lấy tiến độ học tập: {e}")
+        return []
+
 # ---------- Crawl Điểm Tổng kết ----------
 
 def crawl_grades_summary(page: Page) -> List[Dict[str, Any]]:
@@ -288,8 +399,15 @@ def scrape_vku_data(
             grades = crawl_student_grades(page)
             result["grades"] = grades
             
-            # Crawl tổng kết
-            print("\n📈 Đang lấy dữ liệu tổng kết...")
+            # Crawl tiến độ học tập
+            print("\n📈 Đang lấy dữ liệu tiến độ học tập...")
+            tien_do_url = "https://daotao.vku.udn.vn/sv/hoc-phan-con-lai"
+            page.goto(tien_do_url)
+            tien_do = crawl_tien_do_hoc_tap(page)
+            result["tien_do"] = tien_do
+            
+            # Crawl tổng kết (nếu cần)
+            print("\n📋 Đang lấy dữ liệu tổng kết...")
             summary = crawl_grades_summary(page)
             result["summary"] = summary
             
@@ -299,6 +417,7 @@ def scrape_vku_data(
             print("✅ SCRAPE THÀNH CÔNG!")
             print(f"  - Student: {student_info.get('StudentID')}")
             print(f"  - Grades: {len(grades)} môn")
+            print(f"  - Tiến độ: {len(tien_do)} học phần")
             print(f"  - Summary: {len(summary)} học kỳ")
             print("=" * 60)
             

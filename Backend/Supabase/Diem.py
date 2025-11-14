@@ -64,6 +64,16 @@ class DiemRepository(BaseRepository):
             print(f"❌ Lỗi khi xóa: {e}")
             return False
     
+    def delete_by_student(self, student_id: str) -> bool:
+        """Xóa tất cả bản ghi điểm của một sinh viên"""
+        try:
+            self.client.table(self.table_name).delete().eq("StudentID", student_id).execute()
+            print(f"✅ Đã xóa tất cả điểm của {student_id}")
+            return True
+        except Exception as e:
+            print(f"❌ Lỗi khi xóa: {e}")
+            return False
+    
     def get_average_gpa(self, student_id: str) -> Optional[float]:
         """Lấy điểm trung bình của sinh viên"""
         try:

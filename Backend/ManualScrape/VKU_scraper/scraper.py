@@ -17,7 +17,7 @@ from vku_scraper import (
     validate_student_info,
     validate_grades
 )
-from Supabase import sinh_vien_repo, diem_repo
+from Supabase import sinh_vien_repo, diem_repo, tien_do_hoc_tap_repo
 
 
 class VKUScraperManager:
@@ -25,9 +25,14 @@ class VKUScraperManager:
     Manager class để scrape dữ liệu VKU và lưu vào Supabase
     """
     
-    def __init__(self, headless: bool = False, session_file: str = "session.json"):
+    def __init__(self, session_path: str = None, headless: bool = True):
+        """
+        Args:
+            session_path: Đường dẫn đến file session.json (nếu có thì sử dụng, nếu không thì đăng nhập mới)
+            headless: Có ẩn browser không (default True)
+        """
+        self.session_path = session_path
         self.headless = headless
-        self.session_file = session_file
         self.last_scraped_data = None
     
     def scrape_and_sync(self) -> Dict[str, Any]:
@@ -41,7 +46,9 @@ class VKUScraperManager:
                 "data": {
                     "student_info": {...},
                     "grades_inserted": 0,
-                    "grades_failed": 0
+                    "grades_failed": 0,
+                    "tien_do_inserted": 0,
+                    "tien_do_failed": 0
                 }
             }
         """
@@ -51,8 +58,11 @@ class VKUScraperManager:
             "data": {
                 "student_info": {},
                 "grades_inserted": 0,
-                "grades_failed": 0
-            }
+                "grades_failed": 0,
+                "tien_do_inserted": 0,
+                "tien_do_failed": 0
+            },
+            "error": None
         }
         
         try:
@@ -63,17 +73,19 @@ class VKUScraperManager:
             
             scraped_data = scrape_vku_data(
                 headless=self.headless,
-                session_file=self.session_file
+                session_file=self.session_path
             )
             
             if not scraped_data.get("success"):
                 result["message"] = "❌ Lỗi khi scrape dữ liệu"
+                result["error"] = scraped_data.get("error")
                 return result
             
             self.last_scraped_data = scraped_data
             
             student_info = scraped_data.get("student_info", {})
             grades = scraped_data.get("grades", [])
+            tien_do = scraped_data.get("tien_do", [])
             
             # Step 2: Validate dữ liệu
             print("\n" + "=" * 60)
@@ -110,6 +122,15 @@ class VKUScraperManager:
             result["data"]["grades_inserted"] = grades_result.get("inserted", 0)
             result["data"]["grades_failed"] = grades_result.get("failed", 0)
             
+            # Step 5: Insert tiến độ học tập
+            print("\n" + "=" * 60)
+            print("💾 BƯỚC 5: Lưu dữ liệu tiến độ học tập")
+            print("=" * 60)
+            
+            tien_do_result = self._insert_tien_do_hoc_tap(student_id, tien_do)
+            result["data"]["tien_do_inserted"] = tien_do_result.get("inserted", 0)
+            result["data"]["tien_do_failed"] = tien_do_result.get("failed", 0)
+            
             # Final result
             result["success"] = True
             result["message"] = "✅ Đồng bộ dữ liệu thành công!"
@@ -118,6 +139,7 @@ class VKUScraperManager:
             print("🎉 ĐỒNG BỘ THÀNH CÔNG!")
             print(f"  - StudentID: {student_id}")
             print(f"  - Grades: {result['data']['grades_inserted']}/{len(grades)} inserted")
+            print(f"  - TienDo: {result['data']['tien_do_inserted']}/{len(tien_do)} inserted")
             print("=" * 60)
             
             return result
@@ -185,6 +207,39 @@ class VKUScraperManager:
         except Exception as e:
             print(f"❌ Lỗi khi insert điểm: {e}")
             result["failed"] = len(grades)
+            return result
+    
+    def _insert_tien_do_hoc_tap(self, student_id: str, tien_do: List[Dict[str, Any]]) -> Dict[str, int]:
+        """Insert tiến độ học tập vào Supabase"""
+        result = {"inserted": 0, "failed": 0}
+        
+        try:
+            if not tien_do:
+                print("⚠️ Không có dữ liệu tiến độ học tập")
+                return result
+            
+            # Thêm StudentID vào mỗi bản ghi
+            tien_do_data = []
+            for item in tien_do:
+                item_copy = item.copy()
+                item_copy["StudentID"] = student_id
+                tien_do_data.append(item_copy)
+            
+            # Insert batch
+            inserted = tien_do_hoc_tap_repo.bulk_insert_academic_progress(tien_do_data)
+            result["inserted"] = len(inserted)
+            result["failed"] = len(tien_do_data) - len(inserted)
+            
+            if result["inserted"] > 0:
+                print(f"✅ Insert {result['inserted']} tiến độ thành công")
+            if result["failed"] > 0:
+                print(f"⚠️ {result['failed']} tiến độ lỗi")
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi khi insert tiến độ: {e}")
+            result["failed"] = len(tien_do)
             return result
     
     def get_student_from_db(self, student_id: str) -> Optional[Dict[str, Any]]:

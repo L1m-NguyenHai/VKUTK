@@ -23,7 +23,7 @@ class SupabaseClient:
             raise ValueError("❌ SUPABASE_URL và SUPABASE_KEY phải được set trong .env")
         
         self.client: Client = create_client(self.url, self.key)
-        print(f"✅ Supabase client initialized: {self.url}")
+        print("[OK] Supabase client initialized: " + self.url)
     
     def get_client(self) -> Client:
         """Lấy Supabase client"""
