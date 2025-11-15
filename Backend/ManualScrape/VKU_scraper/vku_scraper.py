@@ -213,8 +213,14 @@ def crawl_tien_do_hoc_tap(page: Page) -> List[Dict[str, Any]]:
                 if not ten_hp:
                     continue
                 
-                # Cột 2: Học kỳ
-                hoc_ky = cols.nth(2).inner_text().strip()
+                # Cột 2: Học kỳ - extract số học kỳ
+                hoc_ky_text = cols.nth(2).inner_text().strip()
+                # Parse học kỳ: chỉ lấy số, bỏ qua text như "Số TC tự chọn: 6"
+                hoc_ky_match = re.search(r'(\d+)', hoc_ky_text)
+                if not hoc_ky_match:
+                    # Nếu không có số, skip dòng này
+                    continue
+                hoc_ky = int(hoc_ky_match.group(1))
                 
                 # Cột 3: Bắt buộc (checkbox hoặc <code>HP Tự chọn</code>)
                 col3_html = cols.nth(3).inner_html()
@@ -225,9 +231,12 @@ def crawl_tien_do_hoc_tap(page: Page) -> List[Dict[str, Any]]:
                     checkbox_elem = cols.nth(3).locator("input[type='checkbox'][checked]")
                     bat_buoc = 1 if checkbox_elem.count() > 0 else 0
                 
-                # Cột 4: Số TC (loại bỏ HTML tags)
+                # Cột 4: Số TC (loại bỏ HTML tags và parse số)
                 so_tc_html = cols.nth(4).inner_html()
-                so_tc = re.sub(r'<[^>]+>', '', so_tc_html).strip()
+                so_tc_text = re.sub(r'<[^>]+>', '', so_tc_html).strip()
+                # Extract số từ text (có thể có dạng "3" hoặc "Số TC: 3")
+                so_tc_match = re.search(r'(\d+)', so_tc_text)
+                so_tc = int(so_tc_match.group(1)) if so_tc_match else 0
                 
                 # Cột 5: Tình trạng + Điểm
                 status_html = cols.nth(5).inner_html()

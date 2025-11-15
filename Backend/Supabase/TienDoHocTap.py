@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from base import BaseRepository
+from .base import BaseRepository
 
 class TienDoHocTapRepository(BaseRepository):
     """Repository cho bảng TienDoHocTap"""
@@ -10,6 +10,15 @@ class TienDoHocTapRepository(BaseRepository):
     def get_academic_progress(self, student_id: str) -> List[Dict[str, Any]]:
         """Lấy tiến độ học tập của sinh viên"""
         return self.filter_by("StudentID", student_id)
+    
+    def get_academic_progress_by_user(self, student_id: str, user_id: str) -> List[Dict[str, Any]]:
+        """Lấy tiến độ học tập của sinh viên theo user_id"""
+        try:
+            response = self.client.table(self.table_name).select("*").eq("StudentID", student_id).eq("user_id", user_id).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            return []
     
     def create_academic_progress(self, progress_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Tạo mới bản ghi tiến độ học tập

@@ -25,14 +25,16 @@ class VKUScraperManager:
     Manager class để scrape dữ liệu VKU và lưu vào Supabase
     """
     
-    def __init__(self, session_path: str = None, headless: bool = True):
+    def __init__(self, session_path: str = None, headless: bool = True, user_id: str = None):
         """
         Args:
             session_path: Đường dẫn đến file session.json (nếu có thì sử dụng, nếu không thì đăng nhập mới)
             headless: Có ẩn browser không (default True)
+            user_id: UUID của user (từ Supabase Auth) - để link data với user
         """
         self.session_path = session_path
         self.headless = headless
+        self.user_id = user_id
         self.last_scraped_data = None
     
     def scrape_and_sync(self) -> Dict[str, Any]:
@@ -149,47 +151,74 @@ class VKUScraperManager:
             result["message"] = f"❌ Lỗi: {str(e)}"
             return result
     
+    def _delete_old_data(self, student_id: str) -> bool:
+        """Delete old data for student before re-scraping"""
+        try:
+            if not self.user_id:
+                return True
+            
+            print(f"🗑️ Xóa dữ liệu cũ của sinh viên {student_id}...")
+            
+            # Delete old grades (cascade will handle it, but explicit is better)
+            # Since we have ON DELETE CASCADE on StudentID, deleting student will auto-delete grades
+            # But we can also check if student exists first
+            existing = sinh_vien_repo.get_student_by_id_and_user(student_id, self.user_id)
+            
+            if existing:
+                # Delete will cascade to Diem and TienDoHocTap
+                success = sinh_vien_repo.delete_student(student_id)
+                if success:
+                    print(f"✅ Đã xóa dữ liệu cũ")
+                    return True
+                else:
+                    print(f"⚠️ Không thể xóa dữ liệu cũ, sẽ thử cập nhật")
+                    return False
+            else:
+                print(f"ℹ️ Không có dữ liệu cũ")
+                return True
+                
+        except Exception as e:
+            print(f"❌ Lỗi khi xóa dữ liệu cũ: {e}")
+            return False
+    
     def _insert_student(self, student_info: Dict[str, str]) -> bool:
-        """Insert sinh viên vào Supabase"""
+        """Insert sinh viên vào Supabase (với user_id)"""
         try:
             student_id = student_info.get("StudentID")
             
-            # Kiểm tra nếu SV đã tồn tại
-            existing = sinh_vien_repo.get_student_by_id(student_id)
+            # Thêm user_id vào student_info
+            if self.user_id:
+                student_info["user_id"] = self.user_id
             
-            if existing:
-                print(f"⚠️ SV {student_id} đã tồn tại, cập nhật...")
-                result = sinh_vien_repo.update_student(student_id, student_info)
-                if result:
-                    print(f"✅ Cập nhật SV thành công: {student_id}")
-                    return True
-                else:
-                    print(f"❌ Lỗi cập nhật SV")
-                    return False
+            # Delete old data first (if re-scraping)
+            self._delete_old_data(student_id)
+            
+            # Insert new student data
+            print(f"➕ Thêm dữ liệu mới: {student_id}")
+            result = sinh_vien_repo.create_student(student_info)
+            if result:
+                print(f"✅ Thêm SV thành công: {student_id}")
+                return True
             else:
-                print(f"➕ Thêm SV mới: {student_id}")
-                result = sinh_vien_repo.create_student(student_info)
-                if result:
-                    print(f"✅ Thêm SV thành công: {student_id}")
-                    return True
-                else:
-                    print(f"❌ Lỗi thêm SV")
-                    return False
+                print(f"❌ Lỗi thêm SV")
+                return False
                     
         except Exception as e:
             print(f"❌ Lỗi khi insert SV: {e}")
             return False
     
     def _insert_grades(self, student_id: str, grades: List[Dict[str, Any]]) -> Dict[str, int]:
-        """Insert điểm vào Supabase"""
+        """Insert điểm vào Supabase (với user_id)"""
         result = {"inserted": 0, "failed": 0}
         
         try:
-            # Thêm StudentID vào mỗi bản ghi
+            # Thêm StudentID và user_id vào mỗi bản ghi
             grades_data = []
             for grade in grades:
                 grade_copy = grade.copy()
                 grade_copy["StudentID"] = student_id
+                if self.user_id:
+                    grade_copy["user_id"] = self.user_id
                 grades_data.append(grade_copy)
             
             # Insert batch
@@ -210,7 +239,7 @@ class VKUScraperManager:
             return result
     
     def _insert_tien_do_hoc_tap(self, student_id: str, tien_do: List[Dict[str, Any]]) -> Dict[str, int]:
-        """Insert tiến độ học tập vào Supabase"""
+        """Insert tiến độ học tập vào Supabase (với user_id)"""
         result = {"inserted": 0, "failed": 0}
         
         try:
@@ -218,12 +247,44 @@ class VKUScraperManager:
                 print("⚠️ Không có dữ liệu tiến độ học tập")
                 return result
             
-            # Thêm StudentID vào mỗi bản ghi
+            # Thêm StudentID và user_id vào mỗi bản ghi + validate data types
             tien_do_data = []
             for item in tien_do:
-                item_copy = item.copy()
-                item_copy["StudentID"] = student_id
-                tien_do_data.append(item_copy)
+                try:
+                    item_copy = item.copy()
+                    item_copy["StudentID"] = student_id
+                    if self.user_id:
+                        item_copy["user_id"] = self.user_id
+                    
+                    # Validate and convert HocKy to int
+                    if "HocKy" in item_copy:
+                        hoc_ky = item_copy["HocKy"]
+                        if isinstance(hoc_ky, str):
+                            # Extract number from string
+                            import re
+                            match = re.search(r'(\d+)', hoc_ky)
+                            item_copy["HocKy"] = int(match.group(1)) if match else None
+                        elif not isinstance(hoc_ky, int):
+                            item_copy["HocKy"] = int(hoc_ky) if hoc_ky else None
+                    
+                    # Validate and convert SoTC to int
+                    if "SoTC" in item_copy:
+                        so_tc = item_copy["SoTC"]
+                        if isinstance(so_tc, str):
+                            import re
+                            match = re.search(r'(\d+)', so_tc)
+                            item_copy["SoTC"] = int(match.group(1)) if match else 0
+                        elif not isinstance(so_tc, int):
+                            item_copy["SoTC"] = int(so_tc) if so_tc else 0
+                    
+                    # Skip if missing required fields
+                    if not item_copy.get("HocKy") or not item_copy.get("TenHocPhan"):
+                        continue
+                        
+                    tien_do_data.append(item_copy)
+                except Exception as e:
+                    print(f"⚠️ Skip invalid record: {e}")
+                    continue
             
             # Insert batch
             inserted = tien_do_hoc_tap_repo.bulk_insert_academic_progress(tien_do_data)

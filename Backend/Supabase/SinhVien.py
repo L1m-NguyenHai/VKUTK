@@ -46,6 +46,19 @@ class SinhVienRepository(BaseRepository):
         """Lấy sinh viên theo lớp"""
         return self.filter_by("lop", lop)
     
+    def get_students_by_user(self, user_id: str) -> List[Dict[str, Any]]:
+        """Lấy tất cả sinh viên của một user"""
+        return self.filter_by("user_id", user_id)
+    
+    def get_student_by_id_and_user(self, student_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Lấy thông tin sinh viên theo StudentID và user_id"""
+        try:
+            response = self.client.table(self.table_name).select("*").eq("StudentID", student_id).eq("user_id", user_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            return None
+    
     def get_students_by_major(self, major: str) -> List[Dict[str, Any]]:
         """Lấy sinh viên theo chuyên ngành"""
         return self.filter_by("chuyen_nganh", major)

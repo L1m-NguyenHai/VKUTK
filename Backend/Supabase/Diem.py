@@ -45,6 +45,15 @@ class DiemRepository(BaseRepository):
         """Lấy điểm theo học kỳ"""
         return self.filter_by("HocKy", semester)
     
+    def get_grades_by_student_and_user(self, student_id: str, user_id: str) -> List[Dict[str, Any]]:
+        """Lấy điểm của sinh viên theo user_id"""
+        try:
+            response = self.client.table(self.table_name).select("*").eq("StudentID", student_id).eq("user_id", user_id).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            return []
+    
     def get_grades_by_student_and_semester(self, student_id: str, semester: str) -> List[Dict[str, Any]]:
         """Lấy điểm của sinh viên theo học kỳ"""
         try:

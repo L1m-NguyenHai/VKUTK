@@ -33,7 +33,10 @@ class BaseRepository:
             print(f"✅ Thêm bản ghi vào {self.table_name} thành công")
             return response.data[0] if response.data else None
         except Exception as e:
-            print(f"❌ Lỗi khi thêm bản ghi vào {self.table_name}: {e}")
+            error_msg = str(e)
+            if hasattr(e, 'message'):
+                error_msg = e.message
+            print(f"❌ Lỗi khi thêm bản ghi vào {self.table_name}: {error_msg}")
             return None
     
     def insert_many(self, data_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -43,7 +46,10 @@ class BaseRepository:
             print(f"✅ Đã thêm {len(data_list)} bản ghi vào {self.table_name}")
             return response.data if response.data else []
         except Exception as e:
-            print(f"❌ Lỗi khi thêm nhiều bản ghi vào {self.table_name}: {e}")
+            error_msg = str(e)
+            if hasattr(e, 'message'):
+                error_msg = e.message
+            print(f"❌ Lỗi khi thêm nhiều bản ghi vào {self.table_name}: {error_msg}")
             return []
     
     def update(self, column: str, value: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:

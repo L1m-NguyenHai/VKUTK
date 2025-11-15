@@ -1,0 +1,42 @@
+# Set default behavior, in case users don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files we want to always normalize to LF in the repo
+# (prevents "LF will be replaced by CRLF" messages for these files on Windows)
+*.py     text eol=lf
+*.ts     text eol=lf
+*.tsx    text eol=lf
+*.js     text eol=lf
+*.jsx    text eol=lf
+*.json   text eol=lf
+*.yaml   text eol=lf
+*.yml    text eol=lf
+*.md     text eol=lf
+*.html   text eol=lf
+*.css    text eol=lf
+*.scss   text eol=lf
+*.toml   text eol=lf
+*.rs     text eol=lf
+*.lock   text eol=lf
+
+# Keep Windows scripts with CRLF
+*.ps1    text eol=crlf
+*.bat    text eol=crlf
+
+# Binary files
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.pdf    binary
+*.zip    binary
+
+# Ensure packages and lock files are normalized to LF to avoid warnings
+package.json text eol=lf
+pnpm-lock.yaml text eol=lf
+
+# Keep shell scripts with LF
+*.sh     text eol=lf
+
+# end of .gitattributes

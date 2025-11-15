@@ -7,6 +7,8 @@ from .client import supabase_client
 from .SinhVien import sinh_vien_repo, SinhVienRepository
 from .Diem import diem_repo, DiemRepository
 from .TienDoHocTap import tien_do_hoc_tap_repo, TienDoHocTapRepository
+from .DanhSachLopHP import danh_sach_lop_hp_repo, DanhSachLopHPRepository
+from .auth import auth_repo, AuthRepository
 
 __all__ = [
     'supabase_client',
@@ -16,4 +18,8 @@ __all__ = [
     'DiemRepository',
     'tien_do_hoc_tap_repo',
     'TienDoHocTapRepository',
+    'danh_sach_lop_hp_repo',
+    'DanhSachLopHPRepository',
+    'auth_repo',
+    'AuthRepository',
 ]

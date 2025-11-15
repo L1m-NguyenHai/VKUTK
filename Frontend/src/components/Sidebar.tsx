@@ -1,4 +1,5 @@
-import { Grid3x3, User, Settings, LogIn } from "lucide-react";
+import { Grid3x3, User, Settings, LogIn, LogOut } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 type Page = "plugins" | "info" | "settings" | "schedule" | "session";
 
@@ -107,10 +108,13 @@ export function Sidebar({
         </nav>
 
         <div
-          className={`pt-4 border-t ${
+          className={`pt-4 mt-4 border-t space-y-3 ${
             isDarkMode ? "border-gray-700" : "border-gray-200"
           }`}
         >
+          {/* User info */}
+          <UserInfoSection isDarkMode={isDarkMode} />
+
           <p
             className={`text-xs ${
               isDarkMode ? "text-gray-500" : "text-gray-400"
@@ -120,6 +124,65 @@ export function Sidebar({
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+// User Info Section Component
+function UserInfoSection({ isDarkMode }: { isDarkMode: boolean }) {
+  const { user, signOut } = useAuth();
+
+  if (!user) return null;
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div
+        className={`px-3 py-2 rounded-lg ${
+          isDarkMode ? "bg-gray-700" : "bg-gray-100"
+        }`}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <User
+            className={`w-4 h-4 ${
+              isDarkMode ? "text-blue-400" : "text-blue-600"
+            }`}
+          />
+          <p
+            className={`text-xs font-medium ${
+              isDarkMode ? "text-gray-300" : "text-gray-700"
+            }`}
+          >
+            {user.metadata?.full_name || "User"}
+          </p>
+        </div>
+        <p
+          className={`text-xs truncate ${
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
+          {user.email}
+        </p>
+      </div>
+
+      <button
+        onClick={handleSignOut}
+        className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+          isDarkMode
+            ? "bg-red-900/30 text-red-400 hover:bg-red-900/50"
+            : "bg-red-50 text-red-600 hover:bg-red-100"
+        }`}
+      >
+        <LogOut className="w-4 h-4" />
+        <span>Sign out</span>
+      </button>
     </div>
   );
 }
