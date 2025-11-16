@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent / "ManualScrape" / "VKU_scraper"))
 from scraper import VKUScraperManager
 from Supabase import sinh_vien_repo, diem_repo, auth_repo, tien_do_hoc_tap_repo
 from auth_utils import get_current_user_id
+from cog_loader import CogLoader
 
 app = FastAPI(title="VKU Toolkit API")
 
@@ -74,10 +75,17 @@ class StudentResponse(BaseModel):
 class GradeResponse(BaseModel):
     id: Optional[int] = None
     StudentID: str
+    MaHocPhan: Optional[str] = None
     TenHocPhan: str
     SoTC: int
+    DiemTK: Optional[float] = None
+    DiemThi: Optional[float] = None
     DiemT10: Optional[float] = None
-    HocKy: str
+    DiemTongKet: Optional[float] = None
+    XepLoai: Optional[str] = None
+    HocKy: str  # Database has this as text, not int
+    user_id: Optional[str] = None
+    created_at: Optional[str] = None
 
 class AllStudentsResponse(BaseModel):
     count: int
@@ -481,6 +489,39 @@ async def get_stats():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== PLUGIN MANAGEMENT ====================
+
+# Initialize cog loader
+cog_loader = CogLoader(app)
+
+@app.get("/api/plugins")
+async def get_plugins():
+    """Get list of all loaded plugins"""
+    return {
+        "success": True,
+        "plugins": cog_loader.get_loaded_cogs()
+    }
+
+@app.post("/api/plugins/{cog_name}/reload")
+async def reload_plugin(cog_name: str):
+    """Reload a specific plugin"""
+    success = cog_loader.reload_cog(cog_name)
+    return {
+        "success": success,
+        "message": f"Plugin {cog_name} {'reloaded' if success else 'failed to reload'}"
+    }
+
+@app.on_event("startup")
+async def startup_event():
+    """Load all cogs on startup"""
+    cog_loader.load_all_cogs()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup all cogs on shutdown"""
+    for cog_name in list(cog_loader.loaded_cogs.keys()):
+        cog_loader.unload_cog(cog_name)
 
 # Alias for uvicorn (allows both `uvicorn main:app` and `uvicorn main:main`)
 main = app

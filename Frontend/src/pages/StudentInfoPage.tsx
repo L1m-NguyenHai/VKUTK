@@ -46,24 +46,39 @@ interface ScrapeProgress {
 }
 
 interface Grade {
+  id?: number;
   StudentID: string;
-  MaHocPhan: string;
+  MaHocPhan?: string;
   TenHocPhan: string;
   SoTC: number;
   DiemTK: number | null;
   DiemThi: number | null;
+  DiemT10: number | null;
   DiemTongKet: number | null;
   XepLoai: string | null;
-  HocKy: number;
+  HocKy: string; // Database stores as text like "Học kỳ 1"
+  user_id?: string;
+  created_at?: string;
 }
 
 interface AcademicProgress {
+  id: number;
+  StudentID: string;
+  TenHocPhan: string;
   HocKy: number;
+  BatBuoc: boolean;
+  DiemT4: string | null;
+  DiemChu: string | null;
   SoTC: number;
-  SoTCTichLuy: number | null;
-  TBCHocKy: number | null;
-  TBCTichLuy: number | null;
-  XepLoaiHocLuc: string | null;
+  user_id?: string;
+  created_at?: string;
+}
+
+interface SemesterSummary {
+  HocKy: number;
+  courses: AcademicProgress[];
+  totalTC: number;
+  completedTC: number;
 }
 
 const API_BASE_URL =
@@ -83,6 +98,7 @@ export function StudentInfoPage({
   );
   const [scrapeReady, setScrapeReady] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState<ScrapeProgress[]>([]);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
   const [activeTab, setActiveTab] = useState<"info" | "grades" | "progress">(
     "info"
   );
@@ -93,6 +109,13 @@ export function StudentInfoPage({
   );
   const [isLoadingGrades, setIsLoadingGrades] = useState(false);
   const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [semesterSummaries, setSemesterSummaries] = useState<SemesterSummary[]>(
+    []
+  );
+
+  // Cache duration: 5 minutes
+  const CACHE_DURATION = 5 * 60 * 1000;
 
   // Check if ready to scrape
   const checkScrapeStatus = async () => {
@@ -108,7 +131,19 @@ export function StudentInfoPage({
   };
 
   // Load student info from database
-  const loadStudentInfo = async () => {
+  const loadStudentInfo = async (forceRefresh = false) => {
+    // Check cache validity
+    const now = Date.now();
+    if (
+      !forceRefresh &&
+      studentInfo &&
+      lastFetchTime &&
+      now - lastFetchTime < CACHE_DURATION
+    ) {
+      console.log("Using cached data");
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Get session from localStorage
@@ -136,6 +171,7 @@ export function StudentInfoPage({
           setStudentInfo(student);
           setMessage("Loaded student data from database");
           setMessageType("success");
+          setLastFetchTime(Date.now());
 
           // Load grades and academic progress
           await Promise.all([
@@ -210,9 +246,31 @@ export function StudentInfoPage({
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const data: AcademicProgress[] = await response.json();
         setAcademicProgress(data);
         setStats((prev) => ({ ...prev, progress: data.length }));
+
+        // Aggregate by semester
+        const semesterMap = new Map<number, AcademicProgress[]>();
+        data.forEach((course) => {
+          if (!semesterMap.has(course.HocKy)) {
+            semesterMap.set(course.HocKy, []);
+          }
+          semesterMap.get(course.HocKy)!.push(course);
+        });
+
+        const summaries: SemesterSummary[] = Array.from(semesterMap.entries())
+          .map(([hocKy, courses]) => ({
+            HocKy: hocKy,
+            courses,
+            totalTC: courses.reduce((sum, c) => sum + (c.SoTC || 0), 0),
+            completedTC: courses
+              .filter((c) => c.DiemChu && c.DiemChu !== "F")
+              .reduce((sum, c) => sum + (c.SoTC || 0), 0),
+          }))
+          .sort((a, b) => a.HocKy - b.HocKy);
+
+        setSemesterSummaries(summaries);
       }
     } catch (error) {
       console.error("Error loading academic progress:", error);
@@ -354,56 +412,69 @@ export function StudentInfoPage({
   }, []);
 
   return (
-    <div className="space-y-3 max-w-5xl mx-auto">
+    <div className="space-y-2 sm:space-y-3 max-w-5xl mx-auto px-2 sm:px-0">
       {/* Header with Actions */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <h1
-          className={`text-base md:text-lg font-bold ${
+          className={`text-sm sm:text-base md:text-lg font-bold ${
             isDarkMode ? "text-white" : "text-gray-900"
           }`}
         >
           Thông tin sinh viên
         </h1>
 
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2 w-full sm:w-auto">
           <button
-            onClick={loadStudentInfo}
+            onClick={() => loadStudentInfo(true)}
             disabled={isLoading}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex-1 sm:flex-initial justify-center ${
               isDarkMode
                 ? "bg-gray-700 hover:bg-gray-600 text-white"
                 : "bg-gray-200 hover:bg-gray-300 text-gray-900"
             } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {isLoading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 animate-spin" />
             ) : (
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             )}
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
 
-          <button
-            onClick={scrapeAndSync}
-            disabled={isScraping || !scrapeReady}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              isScraping || !scrapeReady
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            } text-white`}
-          >
-            {isScraping ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Scraping...
-              </>
-            ) : (
-              <>
-                <Download className="w-3.5 h-3.5" />
-                Scrape Data
-              </>
-            )}
-          </button>
+          <div className="flex-1 sm:flex-initial flex flex-col gap-1.5">
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+              <input
+                type="checkbox"
+                checked={privacyConsent}
+                onChange={(e) => setPrivacyConsent(e.target.checked)}
+                className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className={isDarkMode ? "text-gray-300" : "text-gray-700"}>
+                Tôi đồng ý cung cấp thông tin cho VKUTK-App.
+              </span>
+            </label>
+            <button
+              onClick={scrapeAndSync}
+              disabled={isScraping || !scrapeReady || !privacyConsent}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all justify-center ${
+                isScraping || !scrapeReady || !privacyConsent
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              } text-white`}
+            >
+              {isScraping ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Scraping...
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  Scrape Data
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -470,16 +541,16 @@ export function StudentInfoPage({
 
       {/* Stats Cards */}
       {studentInfo && stats.grades > 0 && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <div
             className={`${
               isDarkMode
                 ? "bg-gray-800 border-gray-700"
                 : "bg-white border-gray-200"
-            } border rounded-lg p-3`}
+            } border rounded-lg p-2 sm:p-3`}
           >
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-blue-500" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <BookOpen className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-blue-500" />
               <span
                 className={`text-xs ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -489,7 +560,7 @@ export function StudentInfoPage({
               </span>
             </div>
             <p
-              className={`text-lg font-bold mt-1 ${
+              className={`text-base sm:text-lg font-bold mt-1 ${
                 isDarkMode ? "text-white" : "text-gray-900"
               }`}
             >
@@ -501,10 +572,10 @@ export function StudentInfoPage({
               isDarkMode
                 ? "bg-gray-800 border-gray-700"
                 : "bg-white border-gray-200"
-            } border rounded-lg p-3`}
+            } border rounded-lg p-2 sm:p-3`}
           >
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-purple-500" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <TrendingUp className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-purple-500" />
               <span
                 className={`text-xs ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -514,7 +585,7 @@ export function StudentInfoPage({
               </span>
             </div>
             <p
-              className={`text-lg font-bold mt-1 ${
+              className={`text-base sm:text-lg font-bold mt-1 ${
                 isDarkMode ? "text-white" : "text-gray-900"
               }`}
             >
@@ -526,38 +597,39 @@ export function StudentInfoPage({
 
       {/* Tab Navigation */}
       {studentInfo && (
-        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex gap-1 sm:gap-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
           <button
             onClick={() => setActiveTab("info")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all border-b-2 ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium transition-all border-b-2 whitespace-nowrap ${
               activeTab === "info"
                 ? "border-blue-600 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
-            <GraduationCap className="w-4 h-4" />
-            Sinh viên
+            <GraduationCap className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+            <span className="hidden sm:inline">Sinh viên</span>
+            <span className="sm:hidden">SV</span>
           </button>
           <button
             onClick={() => setActiveTab("grades")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all border-b-2 ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium transition-all border-b-2 whitespace-nowrap ${
               activeTab === "grades"
                 ? "border-blue-600 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             Điểm
           </button>
           <button
             onClick={() => setActiveTab("progress")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-all border-b-2 ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium transition-all border-b-2 whitespace-nowrap ${
               activeTab === "progress"
                 ? "border-blue-600 text-blue-600 dark:text-blue-400"
                 : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
           >
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
             Tiến độ
           </button>
         </div>
@@ -569,7 +641,7 @@ export function StudentInfoPage({
           isDarkMode
             ? "bg-gray-800 border-gray-700"
             : "bg-white border-gray-200"
-        } border rounded-lg p-3`}
+        } border rounded-lg p-2 sm:p-3`}
       >
         {studentInfo ? (
           <>
@@ -745,102 +817,193 @@ export function StudentInfoPage({
                     </p>
                   </div>
                 ) : grades.length > 0 ? (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {grades.map((grade, index) => (
+                  <div className="overflow-x-auto -mx-2 sm:-mx-3">
+                    <div className="inline-block min-w-full align-middle">
                       <div
-                        key={index}
-                        className={`p-2 rounded border ${
-                          isDarkMode
-                            ? "bg-gray-700 border-gray-600"
-                            : "bg-gray-50 border-gray-200"
+                        className={`overflow-hidden rounded-lg border ${
+                          isDarkMode ? "border-gray-700" : "border-gray-200"
                         }`}
                       >
-                        <div className="flex justify-between items-start mb-1">
-                          <h3
-                            className={`text-xs font-semibold ${
-                              isDarkMode ? "text-white" : "text-gray-900"
-                            }`}
-                          >
-                            {grade.TenHocPhan}
-                          </h3>
-                          <span
-                            className={`text-xs px-1.5 py-0.5 rounded ${
-                              grade.DiemTongKet && grade.DiemTongKet >= 5
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                            }`}
-                          >
-                            {grade.DiemTongKet?.toFixed(1) || "N/A"}
-                          </span>
+                        {/* Table Header */}
+                        <div
+                          className={`grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider ${
+                            isDarkMode
+                              ? "bg-gray-800 text-gray-400"
+                              : "bg-gray-50 text-gray-700"
+                          }`}
+                        >
+                          <div className="col-span-5 sm:col-span-4">
+                            Môn học
+                          </div>
+                          <div className="col-span-2 sm:col-span-2 text-center">
+                            Học kỳ
+                          </div>
+                          <div className="col-span-2 sm:col-span-2 text-center">
+                            Số TC
+                          </div>
+                          <div className="col-span-3 sm:col-span-2 text-center">
+                            Điểm
+                          </div>
+                          <div className="hidden sm:block sm:col-span-2 text-center">
+                            Xếp loại
+                          </div>
                         </div>
-                        <div className="grid grid-cols-4 gap-1 text-xs">
-                          <div>
-                            <span
-                              className={
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }
-                            >
-                              Mã HP:
-                            </span>
-                            <p
-                              className={`font-medium ${
-                                isDarkMode ? "text-gray-200" : "text-gray-900"
+
+                        {/* Table Body */}
+                        <div className="max-h-[55vh] sm:max-h-[500px] overflow-y-auto">
+                          {grades.map((grade, index) => (
+                            <div
+                              key={index}
+                              className={`grid grid-cols-12 gap-2 px-3 py-3 text-xs border-t transition-colors ${
+                                isDarkMode
+                                  ? "border-gray-700 hover:bg-gray-750"
+                                  : "border-gray-100 hover:bg-gray-50"
                               }`}
                             >
-                              {grade.MaHocPhan}
-                            </p>
+                              {/* Tên môn học */}
+                              <div className="col-span-5 sm:col-span-4">
+                                <p
+                                  className={`font-medium leading-tight line-clamp-2 ${
+                                    isDarkMode ? "text-white" : "text-gray-900"
+                                  }`}
+                                >
+                                  {grade.TenHocPhan}
+                                </p>
+                                {grade.MaHocPhan && (
+                                  <p
+                                    className={`text-xs mt-0.5 ${
+                                      isDarkMode
+                                        ? "text-gray-500"
+                                        : "text-gray-500"
+                                    }`}
+                                  >
+                                    {grade.MaHocPhan}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Học kỳ */}
+                              <div className="col-span-2 sm:col-span-2 flex items-center justify-center">
+                                <span
+                                  className={`px-2 py-1 rounded text-xs font-medium ${
+                                    isDarkMode
+                                      ? "bg-blue-900/50 text-blue-300"
+                                      : "bg-blue-50 text-blue-700"
+                                  }`}
+                                >
+                                  {grade.HocKy?.replace("Học kỳ ", "HK") || "-"}
+                                </span>
+                              </div>
+
+                              {/* Số tín chỉ */}
+                              <div className="col-span-2 sm:col-span-2 flex items-center justify-center">
+                                <span
+                                  className={`font-semibold ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  {grade.SoTC}
+                                </span>
+                              </div>
+
+                              {/* Điểm */}
+                              <div className="col-span-3 sm:col-span-2 flex items-center justify-center">
+                                <div
+                                  className={`px-3 py-1.5 rounded-lg font-bold text-sm ${
+                                    grade.DiemT10 || grade.DiemTongKet
+                                      ? (grade.DiemT10 || grade.DiemTongKet)! >=
+                                        8.5
+                                        ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-sm"
+                                        : (grade.DiemT10 ||
+                                            grade.DiemTongKet)! >= 7
+                                        ? "bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-sm"
+                                        : (grade.DiemT10 ||
+                                            grade.DiemTongKet)! >= 5.5
+                                        ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-sm"
+                                        : (grade.DiemT10 ||
+                                            grade.DiemTongKet)! >= 5
+                                        ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-sm"
+                                        : "bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-sm"
+                                      : isDarkMode
+                                      ? "bg-gray-700 text-gray-400"
+                                      : "bg-gray-100 text-gray-500"
+                                  }`}
+                                >
+                                  {(
+                                    grade.DiemT10 || grade.DiemTongKet
+                                  )?.toFixed(1) || "N/A"}
+                                </div>
+                              </div>
+
+                              {/* Xếp loại - Hidden on mobile */}
+                              <div className="hidden sm:flex sm:col-span-2 items-center justify-center">
+                                {grade.DiemT10 || grade.DiemTongKet ? (
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                      (grade.DiemT10 || grade.DiemTongKet)! >=
+                                      8.5
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
+                                        : (grade.DiemT10 ||
+                                            grade.DiemTongKet)! >= 7
+                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300"
+                                        : (grade.DiemT10 ||
+                                            grade.DiemTongKet)! >= 5.5
+                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300"
+                                        : (grade.DiemT10 ||
+                                            grade.DiemTongKet)! >= 4
+                                        ? "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300"
+                                        : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
+                                    }`}
+                                  >
+                                    {(grade.DiemT10 || grade.DiemTongKet)! >=
+                                    8.5
+                                      ? "A"
+                                      : (grade.DiemT10 || grade.DiemTongKet)! >=
+                                        7
+                                      ? "B"
+                                      : (grade.DiemT10 || grade.DiemTongKet)! >=
+                                        5.5
+                                      ? "C"
+                                      : (grade.DiemT10 || grade.DiemTongKet)! >=
+                                        4
+                                      ? "D"
+                                      : "F"}
+                                  </span>
+                                ) : (
+                                  <span
+                                    className={`text-xs ${
+                                      isDarkMode
+                                        ? "text-gray-500"
+                                        : "text-gray-400"
+                                    }`}
+                                  >
+                                    -
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Summary Footer */}
+                        <div
+                          className={`grid grid-cols-12 gap-2 px-3 py-2.5 text-xs font-semibold border-t ${
+                            isDarkMode
+                              ? "bg-gray-800 border-gray-700 text-gray-300"
+                              : "bg-gray-50 border-gray-200 text-gray-700"
+                          }`}
+                        >
+                          <div className="col-span-7 sm:col-span-6">
+                            Tổng: {grades.length} môn
                           </div>
-                          <div>
-                            <span
-                              className={
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }
-                            >
-                              TC:
-                            </span>
-                            <p
-                              className={`font-medium ${
-                                isDarkMode ? "text-gray-200" : "text-gray-900"
-                              }`}
-                            >
-                              {grade.SoTC}
-                            </p>
-                          </div>
-                          <div>
-                            <span
-                              className={
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }
-                            >
-                              HK:
-                            </span>
-                            <p
-                              className={`font-medium ${
-                                isDarkMode ? "text-gray-200" : "text-gray-900"
-                              }`}
-                            >
-                              {grade.HocKy}
-                            </p>
-                          </div>
-                          <div>
-                            <span
-                              className={
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }
-                            >
-                              Xếp loại:
-                            </span>
-                            <p
-                              className={`font-medium ${
-                                isDarkMode ? "text-gray-200" : "text-gray-900"
-                              }`}
-                            >
-                              {grade.XepLoai || "N/A"}
-                            </p>
+                          <div className="col-span-5 sm:col-span-6 text-right">
+                            {grades.reduce((sum, g) => sum + g.SoTC, 0)} tín chỉ
                           </div>
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-8">
@@ -875,110 +1038,116 @@ export function StudentInfoPage({
                       Đang tải tiến độ học tập...
                     </p>
                   </div>
-                ) : academicProgress.length > 0 ? (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {academicProgress.map((progress, index) => (
+                ) : semesterSummaries.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {semesterSummaries.map((semester) => (
                       <div
-                        key={index}
-                        className={`p-2 rounded border ${
+                        key={semester.HocKy}
+                        className={`p-2.5 rounded-lg border ${
                           isDarkMode
                             ? "bg-gray-700 border-gray-600"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
-                        <div className="flex justify-between items-center mb-1.5">
+                        <div className="flex justify-between items-center mb-2">
                           <h3
-                            className={`text-xs font-semibold ${
+                            className={`text-sm font-bold ${
                               isDarkMode ? "text-white" : "text-gray-900"
                             }`}
                           >
-                            Học kỳ {progress.HocKy}
+                            Học kỳ {semester.HocKy}
                           </h3>
-                          {progress.XepLoaiHocLuc && (
+                          <div className="flex gap-2 text-xs">
                             <span
-                              className={`text-xs px-1.5 py-0.5 rounded ${
-                                progress.XepLoaiHocLuc === "Giỏi" ||
-                                progress.XepLoaiHocLuc === "Xuất sắc"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                  : progress.XepLoaiHocLuc === "Khá"
-                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              className={`px-2 py-0.5 rounded ${
+                                isDarkMode
+                                  ? "bg-blue-900 text-blue-200"
+                                  : "bg-blue-100 text-blue-800"
                               }`}
                             >
-                              {progress.XepLoaiHocLuc}
+                              {semester.totalTC} TC
                             </span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-xs">
-                          <div>
                             <span
-                              className={
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }
-                            >
-                              Số TC:
-                            </span>
-                            <p
-                              className={`font-medium ${
-                                isDarkMode ? "text-gray-200" : "text-gray-900"
+                              className={`px-2 py-0.5 rounded ${
+                                isDarkMode
+                                  ? "bg-green-900 text-green-200"
+                                  : "bg-green-100 text-green-800"
                               }`}
                             >
-                              {progress.SoTC}
-                            </p>
-                          </div>
-                          <div>
-                            <span
-                              className={
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }
-                            >
-                              TC tích lũy:
+                              {semester.completedTC} đạt
                             </span>
-                            <p
-                              className={`font-medium ${
-                                isDarkMode ? "text-gray-200" : "text-gray-900"
-                              }`}
-                            >
-                              {progress.SoTCTichLuy || "N/A"}
-                            </p>
-                          </div>
-                          <div>
-                            <span
-                              className={
-                                isDarkMode ? "text-gray-400" : "text-gray-600"
-                              }
-                            >
-                              TBC HK:
-                            </span>
-                            <p
-                              className={`font-medium ${
-                                isDarkMode ? "text-gray-200" : "text-gray-900"
-                              }`}
-                            >
-                              {progress.TBCHocKy?.toFixed(2) || "N/A"}
-                            </p>
                           </div>
                         </div>
-                        {progress.TBCTichLuy && (
-                          <div className="mt-1.5 pt-1.5 border-t border-gray-200 dark:border-gray-600">
-                            <div className="flex justify-between text-xs">
-                              <span
-                                className={
-                                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                                }
-                              >
-                                TBC tích lũy:
-                              </span>
-                              <span
-                                className={`font-semibold ${
-                                  isDarkMode ? "text-blue-400" : "text-blue-600"
-                                }`}
-                              >
-                                {progress.TBCTichLuy.toFixed(2)}
-                              </span>
+                        <div className="space-y-1.5">
+                          {semester.courses.map((course, idx) => (
+                            <div
+                              key={idx}
+                              className={`flex items-center justify-between p-1.5 rounded text-xs ${
+                                isDarkMode ? "bg-gray-800" : "bg-white"
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={`font-medium truncate ${
+                                    isDarkMode
+                                      ? "text-gray-200"
+                                      : "text-gray-900"
+                                  }`}
+                                >
+                                  {course.TenHocPhan}
+                                </p>
+                                <div className="flex gap-2 mt-0.5">
+                                  <span
+                                    className={
+                                      isDarkMode
+                                        ? "text-gray-400"
+                                        : "text-gray-600"
+                                    }
+                                  >
+                                    {course.SoTC} TC
+                                  </span>
+                                  {course.BatBuoc && (
+                                    <span className="text-orange-600 dark:text-orange-400">
+                                      • Bắt buộc
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-2">
+                                {course.DiemChu && (
+                                  <span
+                                    className={`px-2 py-0.5 rounded font-semibold ${
+                                      ["A", "A+", "B+", "B"].includes(
+                                        course.DiemChu
+                                      )
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                        : ["C+", "C", "D+", "D"].includes(
+                                            course.DiemChu
+                                          )
+                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                        : course.DiemChu === "F"
+                                        ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                                    }`}
+                                  >
+                                    {course.DiemChu}
+                                  </span>
+                                )}
+                                {course.DiemT4 && (
+                                  <span
+                                    className={`font-medium ${
+                                      isDarkMode
+                                        ? "text-gray-300"
+                                        : "text-gray-700"
+                                    }`}
+                                  >
+                                    ({course.DiemT4})
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>

@@ -1,87 +1,90 @@
-# VKU VKUTK - Hệ thống Quản lý Thông tin Sinh viên
+# VKU Toolkit - Hệ thống Quản lý Thông tin Sinh viên
 
-Ứng dụng desktop (Tauri + React) để quản lý và theo dõi thông tin học tập sinh viên từ hệ thống VKU.
+Ứng dụng desktop (Tauri + React) hỗ trợ sinh viên VKU quản lý thông tin học tập với hệ thống plugin mở rộng.
 
 ## 🎯 Tính năng chính
 
-- 📚 **Quản lý Sinh viên** - Lấy và lưu thông tin sinh viên
-- 📊 **Quản lý Điểm** - Theo dõi điểm số các môn học
-- 📈 **Tiến độ Học tập** - (Sắp tới)
-- 🔄 **Đồng bộ dữ liệu** - Kết nối với Supabase
-- 🌐 **Giao diện thân thiện** - React + Tailwind CSS
+- 🔐 **Multi-user Authentication** - Đăng nhập/đăng ký với Supabase Auth, mỗi user có dữ liệu riêng
+- 📚 **Quản lý Sinh viên** - Scrape và lưu thông tin từ VKU portal
+- 📊 **Bảng điểm** - Hiển thị điểm số với xếp loại A/B/C/D/F, responsive design
+- 📈 **Tiến độ Học tập** - Tổng hợp theo học kỳ với cache 5 phút
+- 🔌 **Plugin System (Cogs)** - Mở rộng tính năng dễ dàng, hỗ trợ n8n webhook
+- 🎨 **Dark/Light Mode** - Giao diện responsive, mobile-first
+- 🔄 **Session Management** - Capture và tái sử dụng VKU session
+- 🛡️ **Privacy Consent** - Yêu cầu đồng ý trước khi scrape dữ liệu
 
 ## 📁 Cấu trúc Dự án
 
 ```
 Tauri-VKUTK/
 ├── Backend/                          # API Server (FastAPI)
-│   ├── main.py                      # Entry point - API chính
-│   ├── UI_main.py                   # UI CLI để test
+│   ├── main.py                      # Entry point - Auto-load plugins
+│   ├── cog_loader.py                # Plugin loader
+│   ├── auth_utils.py                # JWT token validation
 │   ├── requirements.txt              # Dependencies
-│   ├── Supabase/                    # Database management
-│   │   ├── __init__.py
-│   │   ├── client.py                # Supabase client (singleton)
-│   │   ├── base.py                  # BaseRepository (CRUD chung)
-│   │   ├── SinhVien.py              # Repository sinh viên
-│   │   ├── Diem.py                  # Repository điểm
-│   │   └── TienDoHocTap.py          # Repository tiến độ học tập
+│   ├── cogs/                        # 🔌 Plugin System
+│   │   ├── base_cog.py             # Base class cho plugins
+│   │   ├── example_cog.py          # Template plugin
+│   │   └── n8n_webhook_cog.py      # N8N integration
+│   ├── Supabase/                    # Database repositories
+│   │   ├── client.py               # Supabase singleton
+│   │   ├── base.py                 # BaseRepository (CRUD)
+│   │   ├── SinhVien.py             # Student repo
+│   │   ├── Diem.py                 # Grade repo
+│   │   └── TienDoHocTap.py         # Progress repo
 │   └── ManualScrape/
 │       └── VKU_scraper/
-│           ├── scraper_to_supabase.py  # Main scraper (integrate với Supabase)
-│           ├── hoc_phan.py             # Scrape điểm (deprecated)
-│           ├── thong_tin_ca_nhan.py    # Scrape info (deprecated)
-│           ├── tong_ket.py             # Scrape summary (deprecated)
-│           └── session_get.py          # Quản lý session
+│           ├── scraper.py          # VKU scraper manager
+│           ├── vku_scraper.py      # Core scraper
+│           └── session_get.py      # Session capture
 │
 ├── Frontend/                        # UI (React + Tauri)
 │   ├── src/
-│   │   ├── main.tsx                 # Entry point
-│   │   ├── App.tsx                  # Main app
-│   │   ├── components/              # React components
+│   │   ├── main.tsx
+│   │   ├── App.tsx
+│   │   ├── components/
 │   │   │   ├── Header.tsx
 │   │   │   ├── Sidebar.tsx
-│   │   │   ├── PluginCard.tsx
 │   │   │   └── ToggleSwitch.tsx
-│   │   └── pages/                   # Pages
-│   │       ├── PluginsPage.tsx
-│   │       ├── SchedulePage.tsx
-│   │       ├── SessionCapturePage.tsx
-│   │       ├── SettingsPage.tsx
-│   │       └── StudentInfoPage.tsx
-│   ├── src-tauri/                   # Tauri config
-│   ├── package.json
-│   └── vite.config.ts
+│   │   └── pages/
+│   │       ├── PluginsPage.tsx         # Plugin manager UI
+│   │       ├── SessionCapturePage.tsx  # Session + API config
+│   │       ├── StudentInfoPage.tsx     # Student info + grades
+│   │       └── SettingsPage.tsx
+│   └── src-tauri/
 │
-└── README.md                        # File này
+└── README.md
 ```
 
 ## 🗄️ Database Schema (Supabase)
 
 ### 📋 Bảng `SinhVien`
 
-```
+```sql
 - StudentID (text) - PK
 - ho_va_ten (varchar)
 - lop (varchar)
 - khoa (varchar)
 - chuyen_nganh (varchar)
 - khoa_hoc (varchar)
+- user_id (uuid) - FK → auth.users (Multi-user support)
 ```
 
 ### 📊 Bảng `Diem`
 
-```
+```sql
 - id (bigint) - PK
 - StudentID (text) - FK → SinhVien
 - TenHocPhan (text)
 - SoTC (smallint)
-- DiemT10 (real)
+- DiemT10 (float4)
 - HocKy (text)
+- user_id (uuid) - FK → auth.users
 ```
 
-### 📈 Bảng `TienDoHocTap` (Tạm thời)
+### 📈 Bảng `TienDoHocTap`
 
-```
+```sql
 - id (bigint) - PK
 - StudentID (text) - FK → SinhVien
 - TenHocPhan (text)
@@ -90,6 +93,28 @@ Tauri-VKUTK/
 - DiemT4 (text)
 - DiemChu (text)
 - SoTC (smallint)
+- user_id (uuid) - FK → auth.users
+```
+
+### 🔐 Row Level Security (RLS)
+
+Mỗi user chỉ thấy dữ liệu của mình. Chạy migration này trong Supabase SQL Editor:
+
+```sql
+-- Enable RLS
+ALTER TABLE "SinhVien" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Diem" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "TienDoHocTap" ENABLE ROW LEVEL SECURITY;
+
+-- Policies: User chỉ CRUD data của mình
+CREATE POLICY "Users can CRUD own data" ON "SinhVien"
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can CRUD own grades" ON "Diem"
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can CRUD own progress" ON "TienDoHocTap"
+  FOR ALL USING (auth.uid() = user_id);
 ```
 
 ## 🚀 Cách Chạy
@@ -151,50 +176,84 @@ pnpm tauri build
 
 ## 📡 API Endpoints
 
-### Session Management
+### 🔐 Authentication
 
-- `POST /api/capture-session` - Capture browser session
-- `GET /api/check-session` - Kiểm tra session tồn tại
-- `GET /` - Health check
-
-## 🔄 Workflow - Scrape và Lưu Data
-
-### 1. Scrape Data
-
-```python
-from Backend.ManualScrape.VKU_scraper.scraper_to_supabase import main
-
-main()  # Chạy scraper
+```
+POST   /api/auth/signup          # Đăng ký user mới
+POST   /api/auth/signin          # Đăng nhập
+POST   /api/auth/signout         # Đăng xuất
+GET    /api/auth/user            # Get user info (require token)
+POST   /api/auth/refresh         # Refresh token
+POST   /api/auth/reset-password  # Reset password email
 ```
 
-**Luồng:**
+### 📝 Session Management
 
-1. Mở browser → Đăng nhập VKU
-2. Lấy thông tin cá nhân → Insert `SinhVien`
-3. Lấy dữ liệu điểm → Insert `Diem`
-4. Lưu session cookies
-
-### 2. Sử dụng Data
-
-```python
-from Backend.Supabase import sinh_vien_repo, diem_repo
-
-# Lấy sinh viên
-student = sinh_vien_repo.get_student_by_id("SV123")
-
-# Lấy điểm
-grades = diem_repo.get_grades_by_student("SV123")
-
-# Thêm sinh viên
-sinh_vien_repo.create_student({
-    "StudentID": "SV123",
-    "ho_va_ten": "Nguyễn Văn A",
-    "lop": "D20TTNC",
-    "khoa": "CNTT",
-    "chuyen_nganh": "Phần mềm",
-    "khoa_hoc": "2020"
-})
 ```
+POST   /api/capture-session      # Mở browser để login VKU
+GET    /api/check-session        # Check session tồn tại
+DELETE /api/session              # Xóa session
+```
+
+### 👥 Students & Grades
+
+```
+GET    /api/students             # Danh sách sinh viên (của user)
+GET    /api/students/{id}        # Thông tin sinh viên
+GET    /api/students/{id}/grades # Điểm của sinh viên
+POST   /api/scrape-and-sync      # Scrape data từ VKU
+```
+
+### 🔌 Plugins
+
+```
+GET    /api/plugins              # List tất cả plugins
+POST   /api/plugins/{id}/reload  # Reload plugin
+GET    /api/plugins/{id}/*        # Plugin routes (auto-loaded)
+```
+
+**Example Plugin Routes:**
+
+- `POST /api/plugins/example/echo` - Echo message
+- `POST /api/plugins/n8nwebhook/trigger` - N8N webhook endpoint
+- `GET /api/plugins/n8nwebhook/logs` - View webhook logs
+
+## 🔄 Workflow Sử Dụng
+
+### 1. Đăng ký/Đăng nhập
+
+1. Mở app → Trang login
+2. Đăng ký tài khoản hoặc đăng nhập
+3. Token tự động lưu vào localStorage
+
+### 2. Capture VKU Session
+
+1. Vào trang **Session Capture**
+2. Cấu hình API endpoint (nếu cần)
+3. Click **"Capture"** → Browser mở
+4. Đăng nhập VKU → Session auto-save
+
+### 3. Scrape Dữ Liệu
+
+1. Vào trang **Student Info**
+2. ✅ Tick checkbox đồng ý privacy
+3. Click **"Scrape Data"**
+4. Xem progress realtime
+5. Data tự động lưu vào Supabase (gắn user_id)
+
+### 4. Xem Dữ Liệu
+
+- Tab **Sinh viên**: Thông tin cá nhân
+- Tab **Điểm**: Bảng điểm với xếp loại A/B/C/D/F
+- Tab **Tiến độ**: Tổng hợp theo học kỳ
+- Cache 5 phút → Click Refresh để reload
+
+### 5. Quản lý Plugins
+
+1. Vào trang **Plugins**
+2. Xem danh sách plugins đã load
+3. Click **Reload** để reload plugin
+4. Click **API** để xem endpoints
 
 ## 📚 Repository Pattern
 
@@ -220,39 +279,82 @@ diem_repo.get_grades_by_subject("Lập trình Python")
 diem_repo.get_grades_by_semester("Học kỳ 1")
 ```
 
-## 🔧 Development
+## 🔌 Plugin System (Cogs)
 
-### Add New Feature
+### Cách tạo Plugin mới
 
-1. **Tạo function trong folder con**
+**1. Copy template:**
+
+```bash
+cd Backend/cogs
+cp example_cog.py my_plugin_cog.py
+```
+
+**2. Sửa metadata:**
 
 ```python
-# Backend/ManualScrape/VKU_scraper/new_feature.py
-def scrape_something():
-    # Chỉ implement function, không chạy main
-    pass
+from fastapi import FastAPI
+from .base_cog import BaseCog, CogMetadata
+
+class MyPluginCog(BaseCog):
+    def __init__(self, app: FastAPI):
+        super().__init__(app)
+        self.metadata = CogMetadata(
+            name="My Plugin",
+            description="Mô tả plugin",
+            version="1.0.0",
+            author="Tên bạn",
+            icon="Zap",  # Lucide icon
+            color="from-blue-500 to-purple-500"
+        )
+
+    def setup(self):
+        @self.router.get("/hello")
+        async def hello():
+            return {"message": "Hello!"}
+
+        @self.router.post("/webhook")
+        async def webhook(data: dict):
+            # Xử lý webhook từ n8n
+            return {"success": True}
+
+def setup(app: FastAPI):
+    cog = MyPluginCog(app)
+    cog.setup()
+    cog.register_routes()
+    return cog
 ```
 
-2. **Gọi từ main.py**
+**3. Restart backend** → Plugin auto-load!
 
-```python
-# Backend/main.py
-from Backend.ManualScrape.VKU_scraper.new_feature import scrape_something
+**4. Access:** `http://localhost:8000/api/plugins/myplugin/hello`
 
-@app.post("/api/new-endpoint")
-async def new_endpoint():
-    result = scrape_something()
-    return result
+### N8N Webhook Integration
+
+**Plugin sẵn có:** `n8n_webhook_cog.py`
+
+**Cách dùng với n8n:**
+
+1. Trong n8n workflow, thêm node **Webhook**
+2. Method: `POST`
+3. URL: `http://localhost:8000/api/plugins/n8nwebhook/trigger`
+4. Body (JSON):
+
+```json
+{
+  "event": "grade_updated",
+  "data": {
+    "student_id": "2051050001",
+    "grade": 9.5
+  }
+}
 ```
 
-3. **Frontend gọi API**
+**Endpoints:**
 
-```typescript
-// Frontend/src/pages/SomePage.tsx
-const response = await fetch("http://localhost:8000/api/new-endpoint", {
-  method: "POST",
-});
-```
+- `POST /api/plugins/n8nwebhook/trigger` - Main webhook
+- `POST /api/plugins/n8nwebhook/grades` - Grade updates
+- `GET /api/plugins/n8nwebhook/logs` - View logs
 
 ## ⚙️ Config
 
@@ -300,23 +402,93 @@ from Supabase import sinh_vien_repo
 - 🔒 **Lưu session cookies** để tái sử dụng
 - 🚫 **Không commit `.env`** - Chứa credentials nhạy cảm
 
-## 🛣️ Roadmap
+## 🎨 Frontend Features
 
-- [ ] Hoàn thành `TienDoHocTap` scraper
-- [ ] Thêm endpoint quản lý sinh viên (CRUD)
-- [ ] UI để view/edit dữ liệu
-- [ ] Export PDF/Excel
-- [ ] Notification system
-- [ ] Mobile app (React Native)
+### Design Highlights
 
-## 👥 Team
+- ✅ **Responsive**: Mobile-first với Tailwind breakpoints
+- ✅ **Dark/Light Mode**: Toggle ở Header
+- ✅ **Grade Classification**: A (8.5-10), B (7-8.4), C (5.5-6.9), D (4-5.4), F (<4)
+- ✅ **Data Caching**: 5-minute cache để tránh spam API
+- ✅ **Progress Tracking**: Real-time scrape progress với emoji icons
+- ✅ **Privacy Consent**: Checkbox bắt buộc trước khi scrape
+- ✅ **Tabbed Interface**: Sinh viên / Điểm / Tiến độ học tập
 
-- L1m-NguyenHai - Repository owner
+### API Configuration
+
+- Session Capture page cho phép thay đổi API endpoint
+- Mặc định: `http://localhost:8000`
+- Có thể đổi sang server remote
+
+## 🛡️ Security & Privacy
+
+### Authentication
+
+- JWT tokens với Supabase Auth
+- Tokens lưu trong localStorage
+- Auto-refresh khi hết hạn
+
+### Data Isolation
+
+- Row Level Security (RLS) trong Supabase
+- Mỗi user chỉ thấy/sửa data của mình
+- `user_id` foreign key CASCADE delete
+
+### Privacy Consent
+
+- Bắt buộc tick checkbox trước khi scrape
+- Message: "Tôi đồng ý cho phép xem dữ liệu. Cam kết bảo mật."
+
+## 🐛 Troubleshooting
+
+### Backend không start
+
+```bash
+# Check dependencies
+cd Backend
+uv pip list
+
+# Reinstall
+uv pip install -r requirements.txt
+```
+
+### Frontend không connect backend
+
+- Check API endpoint trong Session Capture page
+- Backend phải chạy trước: `http://localhost:8000`
+- Check CORS settings trong `main.py`
+
+### Session hết hạn
+
+- Vào Session Capture → Delete Session
+- Capture lại session mới
+
+### Plugin không load
+
+- Check `Backend/cogs/` có file `.py` đúng format
+- File phải có hàm `setup(app)`
+- Restart backend để reload
+
+## 👥 Contributing
+
+### Team Workflow
+
+1. Mỗi thành viên tạo branch: `feature/my-feature`
+2. Tạo plugin riêng trong `Backend/cogs/my_cog.py`
+3. Test local
+4. Create PR (1 file cog, không conflict)
+5. Merge → Auto-load
+
+### Code Standards
+
+- Python: PEP 8
+- TypeScript: ESLint rules
+- Commits: Conventional commits format
 
 ## 📄 License
 
-MIT License
+MIT License - VKU Toolkit Team
 
 ---
 
-**Last Updated:** November 10, 2025
+**Last Updated:** November 17, 2025
