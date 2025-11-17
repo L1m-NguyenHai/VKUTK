@@ -1,4 +1,4 @@
-import { Grid3x3, User, Settings, LogIn, LogOut } from "lucide-react";
+import { Grid3x3, User, Settings, LogIn, LogOut, MessageSquare } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 type Page = "plugins" | "info" | "settings" | "schedule" | "session";
@@ -8,6 +8,7 @@ interface SidebarProps {
   currentPage: Page;
   navigateTo: (page: Page) => void;
   isSidebarCollapsed: boolean;
+  onChatbotClick?: () => void;
 }
 
 export function Sidebar({
@@ -15,6 +16,7 @@ export function Sidebar({
   currentPage,
   navigateTo,
   isSidebarCollapsed,
+  onChatbotClick,
 }: SidebarProps) {
   return (
     <div
@@ -104,6 +106,18 @@ export function Sidebar({
           >
             <Settings className="w-4 h-4" />
             <span>Cài đặt</span>
+          </button>
+
+          <button
+            onClick={onChatbotClick}
+            className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
+              isDarkMode
+                ? "text-gray-300 hover:bg-gray-700 bg-gradient-to-r from-indigo-900/30 to-blue-900/30 hover:from-indigo-900/50 hover:to-blue-900/50"
+                : "text-gray-700 hover:bg-gray-100 bg-gradient-to-r from-indigo-50/50 to-blue-50/50 hover:from-indigo-100 hover:to-blue-100"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>Chatbot</span>
           </button>
         </nav>
 

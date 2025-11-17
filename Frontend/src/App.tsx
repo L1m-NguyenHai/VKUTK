@@ -8,6 +8,7 @@ import {
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
+import { ChatbotPanel } from "./components/ChatbotPanel";
 import { PluginsPage } from "./pages/PluginsPage";
 import { StudentInfoPage } from "./pages/StudentInfoPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -44,6 +45,7 @@ function App() {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   const navigateTo = (page: Page) => {
     const newHistory = history.slice(0, historyIndex + 1);
@@ -126,11 +128,18 @@ function App() {
                       currentPage={currentPage}
                       navigateTo={navigateTo}
                       isSidebarCollapsed={isSidebarCollapsed}
+                      onChatbotClick={() => setIsChatbotOpen(!isChatbotOpen)}
                     />
 
                     <div className="flex-1 overflow-y-auto p-4 md:p-6">
                       {renderContent()}
                     </div>
+
+                    <ChatbotPanel
+                      isDarkMode={isDarkMode}
+                      isOpen={isChatbotOpen}
+                      onClose={() => setIsChatbotOpen(false)}
+                    />
                   </div>
                 </div>
               </ProtectedRoute>

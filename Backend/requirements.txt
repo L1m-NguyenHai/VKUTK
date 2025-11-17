@@ -7,3 +7,4 @@ playwright>=1.40.0
 supabase>=2.3.0
 python-dotenv>=1.0.0
 psycopg2-binary>=2.9.9
+httpx>=0.24.0
