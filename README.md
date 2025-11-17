@@ -8,7 +8,8 @@
 - 📚 **Quản lý Sinh viên** - Scrape và lưu thông tin từ VKU portal
 - 📊 **Bảng điểm** - Hiển thị điểm số với xếp loại A/B/C/D/F, responsive design
 - 📈 **Tiến độ Học tập** - Tổng hợp theo học kỳ với cache 5 phút
-- 🔌 **Plugin System (Cogs)** - Mở rộng tính năng dễ dàng, hỗ trợ n8n webhook
+- 🔌 **Plugin System (Cogs)** - Mở rộ tính năng dễ dàng, hỗ trợ n8n webhook
+- 💬 **Chatbot Integration** - Chat panel tích hợp n8n chatbot webhook
 - 🎨 **Dark/Light Mode** - Giao diện responsive, mobile-first
 - 🔄 **Session Management** - Capture và tái sử dụng VKU session
 - 🛡️ **Privacy Consent** - Yêu cầu đồng ý trước khi scrape dữ liệu
@@ -45,6 +46,7 @@ Tauri-VKUTK/
 │   │   ├── components/
 │   │   │   ├── Header.tsx
 │   │   │   ├── Sidebar.tsx
+│   │   │   ├── ChatbotPanel.tsx      # 💬 Chatbot UI
 │   │   │   └── ToggleSwitch.tsx
 │   │   └── pages/
 │   │       ├── PluginsPage.tsx         # Plugin manager UI
@@ -212,9 +214,12 @@ POST   /api/plugins/{id}/reload  # Reload plugin
 GET    /api/plugins/{id}/*        # Plugin routes (auto-loaded)
 ```
 
-**Example Plugin Routes:**
+### 🔌 Plugin Routes
 
 - `POST /api/plugins/example/echo` - Echo message
+- `POST /api/plugins/n8nchatbot/send` - Send message to N8N chatbot
+- `GET /api/plugins/n8nchatbot/` - Get chatbot info
+- `GET /api/plugins/n8nchatbot/logs` - View message logs
 - `POST /api/plugins/n8nwebhook/trigger` - N8N webhook endpoint
 - `GET /api/plugins/n8nwebhook/logs` - View webhook logs
 
@@ -468,6 +473,78 @@ uv pip install -r requirements.txt
 - Check `Backend/cogs/` có file `.py` đúng format
 - File phải có hàm `setup(app)`
 - Restart backend để reload
+
+## 💬 Chatbot Integration
+
+### Setup
+
+**Backend: N8N Chatbot Cog** (`Backend/cogs/n8n_chatbot_cog.py`)
+
+Tự động load khi backend start. Kết nối tới N8N webhook: `https://n8n.group12.cloud/webhook/chat-bot`
+
+**Frontend: Chatbot Panel** (`Frontend/src/components/ChatbotPanel.tsx`)
+
+- Click button "Chatbot" ở sidebar để mở chat panel
+- Chat panel hiển thị ở bên phải màn hình (desktop) hoặc full screen (mobile)
+- Tự động gửi `message` + `auth_userid` tới backend
+
+### API Endpoints
+
+**POST** `/api/plugins/n8nchatbot/send`
+
+Request body:
+```json
+{
+  "message": "Xin chào!",
+  "auth_userid": "user123"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "status_code": 200,
+  "message": "Chào bạn!",
+  "response": [{"output": "Chào bạn!"}]
+}
+```
+
+**GET** `/api/plugins/n8nchatbot/`
+
+Lấy thông tin chatbot cog
+
+**GET** `/api/plugins/n8nchatbot/logs?limit=20`
+
+Xem lịch sử tin nhắn (tối đa 100 lưu trong memory)
+
+### Features
+
+- ✅ Real-time message display
+- ✅ User & bot message distinction (blue/gray)
+- ✅ Timestamps for each message
+- ✅ Loading indicator while waiting for response
+- ✅ Auto-scroll to latest message
+- ✅ Dark/Light mode support
+- ✅ JSON response parsing (handles `[{"output":"..."}]` format)
+- ✅ Error handling & fallback messages
+- ✅ User context (sends authenticated user ID)
+
+### Testing with Postman
+
+Sử dụng Postman để test:
+
+```
+POST http://localhost:8000/api/plugins/n8nchatbot/send
+Content-Type: application/json
+
+{
+  "message": "Chào bot",
+  "auth_userid": "student_001"
+}
+```
+
+---
 
 ## 👥 Contributing
 
