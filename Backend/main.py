@@ -134,11 +134,10 @@ async def capture_session():
         
         print(f"Running session capture script: {SESSION_GET_SCRIPT}")
         
-        # Run session_get.py as subprocess
-        # Note: We need to modify session_get.py to save to the correct location
+        # Run session_get.py as subprocess using uv to ensure correct environment
         result = subprocess.run(
-            ["python", str(SESSION_GET_SCRIPT)],
-            cwd=str(SESSION_GET_SCRIPT.parent),
+            ["uv", "run", "python", str(SESSION_GET_SCRIPT)],
+            cwd=str(SESSION_GET_SCRIPT.parent.parent.parent),  # Run from Backend folder
             capture_output=True,
             text=True,
             timeout=300  # 5 minutes timeout

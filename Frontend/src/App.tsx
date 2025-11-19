@@ -14,10 +14,11 @@ import { StudentInfoPage } from "./pages/StudentInfoPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { SessionCapturePage } from "./pages/SessionCapturePage";
+import TimetablePage from "./pages/TimetablePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
-type Page = "plugins" | "info" | "settings" | "schedule" | "session";
+type Page = "plugins" | "info" | "settings" | "schedule" | "session" | "timetable";
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -75,6 +76,8 @@ function App() {
         return <PluginsPage isDarkMode={isDarkMode} navigateTo={navigateTo} />;
       case "schedule":
         return <SchedulePage isDarkMode={isDarkMode} />;
+      case "timetable":
+        return <TimetablePage />;
       case "info":
         return <StudentInfoPage isDarkMode={isDarkMode} />;
       case "session":
