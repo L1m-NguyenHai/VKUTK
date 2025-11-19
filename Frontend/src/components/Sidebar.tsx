@@ -1,7 +1,7 @@
-import { Grid3x3, User, Settings, LogIn, LogOut, MessageSquare } from "lucide-react";
+import { Grid3x3, User, Settings, LogIn, LogOut, MessageSquare, Calendar } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
-type Page = "plugins" | "info" | "settings" | "schedule" | "session";
+type Page = "plugins" | "info" | "settings" | "schedule" | "session" | "timetable";
 
 interface SidebarProps {
   isDarkMode: boolean;
@@ -76,6 +76,21 @@ export function Sidebar({
           >
             <User className="w-4 h-4" />
             <span>Thông tin</span>
+          </button>
+          <button
+            onClick={() => navigateTo("timetable")}
+            className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
+              currentPage === "timetable"
+                ? isDarkMode
+                  ? "bg-gradient-to-r from-yellow-900/50 to-amber-900/50 text-yellow-300 font-medium shadow-md"
+                  : "bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 font-medium shadow-sm"
+                : isDarkMode
+                ? "text-gray-300 hover:bg-gray-700"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Thời khoá biểu</span>
           </button>
           <button
             onClick={() => navigateTo("session")}
