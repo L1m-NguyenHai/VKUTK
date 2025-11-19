@@ -20,13 +20,14 @@ Response Format Supported:
 
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File, Form
 from .base_cog import BaseCog, CogMetadata
 from datetime import datetime
 import httpx
+import io
 
 
-WEBHOOK_URL = "https://n8n.group12.cloud/webhook/chat-documents"
+WEBHOOK_URL = "https://n8n.group12.cloud/webhook/mcp-server"
 
 
 class ChatSendRequest(BaseModel):
@@ -58,28 +59,54 @@ class N8NChatbotCog(BaseCog):
             }
 
         @self.router.post("/send")
-        async def send_chat(req: ChatSendRequest):
+        async def send_chat(
+            message: str = Form(...),
+            auth_userid: Optional[str] = Form(None),
+            file: Optional[UploadFile] = File(None),
+        ):
             """
-            Forward `message` and `auth_userid` to the external n8n webhook.
+            Forward message and optional file to the external n8n webhook.
+            Supports binary file upload (multipart/form-data) like Postman.
 
-            Request JSON body (example):
-            {
-              "message": "Hello, bot!",
-              "auth_userid": "user123"
-            }
+            Request form data (example):
+            - message: "Hello, bot!"
+            - auth_userid: "user123"
+            - file: <binary file>
 
             Returns the JSON response from the external webhook (if any).
             Handles array responses like [{"output": "..."}]
             """
-            payload = {
-                "message": req.message,
-                "auth_userid": req.auth_userid,
+            # Prepare form data for webhook
+            webhook_data = {
+                "message": message,
+                "user_id": auth_userid,
+                "auth_userid": auth_userid,
                 "sent_at": datetime.utcnow().isoformat() + "Z",
             }
 
+            # Prepare files for webhook if file is provided
+            files = None
+            if file:
+                file_content = await file.read()
+                files = {
+                    "file": (file.filename, io.BytesIO(file_content), file.content_type),
+                }
+
             async with httpx.AsyncClient(timeout=180.0) as client:
                 try:
-                    resp = await client.post(WEBHOOK_URL, json=payload)
+                    if files:
+                        # Send as multipart form data with binary file
+                        resp = await client.post(
+                            WEBHOOK_URL,
+                            data=webhook_data,
+                            files=files,
+                        )
+                    else:
+                        # Send as form data without file
+                        resp = await client.post(
+                            WEBHOOK_URL,
+                            data=webhook_data,
+                        )
                 except httpx.RequestError as exc:
                     raise HTTPException(status_code=502, detail=f"Request to webhook failed: {exc}")
 
@@ -122,7 +149,8 @@ class N8NChatbotCog(BaseCog):
 
             log_entry = {
                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                "request": payload,
+                "request": webhook_data,
+                "file": file.filename if file else None,
                 "status_code": resp.status_code,
                 "response": content,
             }

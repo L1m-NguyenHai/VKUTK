@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, X, MessageSquare, Loader } from "lucide-react";
+import { Send, X, MessageSquare, Loader, Paperclip } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Message {
@@ -14,6 +14,12 @@ interface ChatbotPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const SLASH_COMMANDS = [
+  { command: "/documents", description: "Xem tài liệu của trường" },
+  { command: "/scores", description: "Xem điểm số cá nhân" },
+  { command: "/summary", description: "Tóm tắt nội dung từ file PDF" },
+];
 
 // Parse markdown: bold (**text**), links ([text](url)), and line breaks (\n)
 function parseMarkdown(text: string) {
@@ -71,7 +77,11 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showCommands, setShowCommands] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -82,12 +92,25 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    // Don't send if neither input nor file
+    if (!inputValue.trim() && !selectedFile) return;
+    if (isLoading) return;
+
+    // Build user message text (show file + text if both exist)
+    let displayText = "";
+    if (selectedFile) {
+      displayText = `📎 ${selectedFile.name}`;
+      if (inputValue.trim()) {
+        displayText += "\n" + inputValue;
+      }
+    } else {
+      displayText = inputValue;
+    }
 
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputValue,
+      text: displayText,
       sender: "user",
       timestamp: new Date().toLocaleTimeString(),
     };
@@ -97,17 +120,21 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
     setIsLoading(true);
 
     try {
+      // Build FormData for multipart request (supporting binary file upload)
+      const formData = new FormData();
+      formData.append("message", inputValue || (selectedFile ? `File: ${selectedFile.name}` : ""));
+      formData.append("auth_userid", user?.id || "anonymous");
+
+      // Add file if selected (binary upload like Postman)
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
       const response = await fetch(
         "http://localhost:8000/api/plugins/n8nchatbot/send",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: inputValue,
-            auth_userid: user?.id || "anonymous",
-          }),
+          body: formData,
         }
       );
 
@@ -150,6 +177,9 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
       };
 
       setMessages((prev) => [...prev, botMessage]);
+
+      // Clear selected file after sending
+      setSelectedFile(null);
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
@@ -169,6 +199,39 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    // Show commands if input starts with /
+    if (value === "/" || (value.startsWith("/") && !value.includes(" "))) {
+      setShowCommands(true);
+    } else {
+      setShowCommands(false);
+    }
+  };
+
+  const selectCommand = (command: string) => {
+    setInputValue(command + " ");
+    setShowCommands(false);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
   };
 
   if (!isOpen) return null;
@@ -311,33 +374,112 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
             : "border-gray-200 bg-white"
         }`}
       >
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
-            disabled={isLoading}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm outline-none transition-all ${
-              isDarkMode
-                ? "bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
-                : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-400"
-            } disabled:opacity-50`}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className={`p-2 rounded-lg transition-all ${
-              inputValue.trim() && !isLoading
-                ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
-                : isDarkMode
-                ? "bg-gray-700 text-gray-400"
-                : "bg-gray-200 text-gray-500"
-            }`}
-          >
-            <Send className="w-4 h-4" />
-          </button>
+        <div ref={inputContainerRef} className="flex flex-col gap-2">
+          {/* Input Area with File Display */}
+          <div className="flex gap-2 relative">
+            <div className="flex-1 relative">
+              {/* File Badge Display */}
+              {selectedFile && (
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded-lg text-sm">
+                    <Paperclip className="w-3 h-3" />
+                    <span className="max-w-[150px] truncate">{selectedFile.name}</span>
+                    <button
+                      onClick={removeSelectedFile}
+                      className="ml-1 hover:text-blue-700 dark:hover:text-blue-300"
+                      title="Remove file"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <input
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message... (try /)"
+                disabled={isLoading}
+                className={`w-full px-3 py-2 rounded-lg text-sm outline-none transition-all ${
+                  isDarkMode
+                    ? "bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+                    : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-400"
+                } disabled:opacity-50`}
+              />
+              
+              {/* Slash Commands Suggestions */}
+              {showCommands && (
+                <div
+                  className={`absolute bottom-full left-0 right-0 mb-2 rounded-lg shadow-lg overflow-hidden z-50 ${
+                    isDarkMode ? "bg-gray-700 border border-gray-600" : "bg-white border border-gray-200"
+                  }`}
+                >
+                  {SLASH_COMMANDS.map((cmd) => (
+                    <button
+                      key={cmd.command}
+                      onClick={() => selectCommand(cmd.command)}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        isDarkMode
+                          ? "hover:bg-gray-600 text-white"
+                          : "hover:bg-gray-100 text-gray-900"
+                      }`}
+                    >
+                      <div className="font-mono font-semibold">{cmd.command}</div>
+                      <div
+                        className={`text-xs ${
+                          isDarkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        {cmd.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* File Upload Button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className={`p-2 rounded-lg transition-all ${
+                !isLoading
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+                  : isDarkMode
+                  ? "bg-gray-700 text-gray-400"
+                  : "bg-gray-200 text-gray-500"
+              }`}
+              title="Gửi file"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
+
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileSelect}
+              className="hidden"
+              accept="*/*"
+            />
+            
+            {/* Send Message Button */}
+            <button
+              onClick={sendMessage}
+              disabled={!inputValue.trim() && !selectedFile || isLoading}
+              className={`p-2 rounded-lg transition-all ${
+                (inputValue.trim() || selectedFile) && !isLoading
+                  ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                  : isDarkMode
+                  ? "bg-gray-700 text-gray-400"
+                  : "bg-gray-200 text-gray-500"
+              }`}
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
