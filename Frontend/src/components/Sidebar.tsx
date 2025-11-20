@@ -1,7 +1,7 @@
-import { Grid3x3, User, Settings, LogIn, LogOut, MessageSquare, Calendar } from "lucide-react";
+import { Grid3x3, User, LogOut, MessageSquare, Calendar } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
-type Page = "plugins" | "info" | "settings" | "schedule" | "session" | "timetable";
+type Page = "plugins" | "info" | "schedule" | "timetable";
 
 interface SidebarProps {
   isDarkMode: boolean;
@@ -63,21 +63,6 @@ export function Sidebar({
             <span>Plugins</span>
           </button>
           <button
-            onClick={() => navigateTo("info")}
-            className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
-              currentPage === "info"
-                ? isDarkMode
-                  ? "bg-gradient-to-r from-green-900/50 to-emerald-900/50 text-green-300 font-medium shadow-md"
-                  : "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 font-medium shadow-sm"
-                : isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <User className="w-4 h-4" />
-            <span>Thông tin</span>
-          </button>
-          <button
             onClick={() => navigateTo("timetable")}
             className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
               currentPage === "timetable"
@@ -91,36 +76,6 @@ export function Sidebar({
           >
             <Calendar className="w-4 h-4" />
             <span>Thời khoá biểu</span>
-          </button>
-          <button
-            onClick={() => navigateTo("session")}
-            className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
-              currentPage === "session"
-                ? isDarkMode
-                  ? "bg-gradient-to-r from-purple-900/50 to-pink-900/50 text-purple-300 font-medium shadow-md"
-                  : "bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 font-medium shadow-sm"
-                : isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <LogIn className="w-4 h-4" />
-            <span>Session</span>
-          </button>
-          <button
-            onClick={() => navigateTo("settings")}
-            className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
-              currentPage === "settings"
-                ? isDarkMode
-                  ? "bg-gradient-to-r from-orange-900/50 to-red-900/50 text-orange-300 font-medium shadow-md"
-                  : "bg-gradient-to-r from-orange-50 to-red-50 text-orange-700 font-medium shadow-sm"
-                : isDarkMode
-                ? "text-gray-300 hover:bg-gray-700"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            <span>Cài đặt</span>
           </button>
 
           <button
@@ -142,7 +97,7 @@ export function Sidebar({
           }`}
         >
           {/* User info */}
-          <UserInfoSection isDarkMode={isDarkMode} />
+          <UserInfoSection isDarkMode={isDarkMode} navigateTo={navigateTo} />
 
           <p
             className={`text-xs ${
@@ -158,7 +113,13 @@ export function Sidebar({
 }
 
 // User Info Section Component
-function UserInfoSection({ isDarkMode }: { isDarkMode: boolean }) {
+function UserInfoSection({
+  isDarkMode,
+  navigateTo,
+}: {
+  isDarkMode: boolean;
+  navigateTo: (page: Page) => void;
+}) {
   const { user, signOut } = useAuth();
 
   if (!user) return null;
@@ -173,9 +134,12 @@ function UserInfoSection({ isDarkMode }: { isDarkMode: boolean }) {
 
   return (
     <div className="space-y-2">
-      <div
-        className={`px-3 py-2 rounded-lg ${
-          isDarkMode ? "bg-gray-700" : "bg-gray-100"
+      <button
+        onClick={() => navigateTo("info")}
+        className={`w-full px-3 py-2 rounded-lg transition-all ${
+          isDarkMode
+            ? "bg-gray-700 hover:bg-gray-600"
+            : "bg-gray-100 hover:bg-gray-200"
         }`}
       >
         <div className="flex items-center gap-2 mb-1">
@@ -193,13 +157,13 @@ function UserInfoSection({ isDarkMode }: { isDarkMode: boolean }) {
           </p>
         </div>
         <p
-          className={`text-xs truncate ${
+          className={`text-xs truncate text-left ${
             isDarkMode ? "text-gray-400" : "text-gray-500"
           }`}
         >
           {user.email}
         </p>
-      </div>
+      </button>
 
       <button
         onClick={handleSignOut}

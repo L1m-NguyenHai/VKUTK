@@ -1,4 +1,15 @@
-import { Search, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  X,
+  Settings,
+} from "lucide-react";
+import { ToggleSwitch } from "./ToggleSwitch";
+
+type Page = "plugins" | "info" | "schedule" | "timetable";
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -10,6 +21,8 @@ interface HeaderProps {
   goForward: () => void;
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
+  navigateTo?: (page: Page) => void;
+  setIsDarkMode: (value: boolean) => void;
 }
 
 export function Header({
@@ -22,7 +35,25 @@ export function Header({
   goForward,
   isSidebarCollapsed,
   setIsSidebarCollapsed,
+  navigateTo,
+  setIsDarkMode,
 }: HeaderProps) {
+  const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(event.target as Node)
+      ) {
+        setShowSettings(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div
       className={`${
@@ -34,6 +65,7 @@ export function Header({
         className={`p-2 rounded-lg ${
           isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
         } transition-colors md:p-1.5 md:rounded-md`}
+        aria-label="Toggle sidebar"
       >
         {isSidebarCollapsed ? (
           <Menu
@@ -56,6 +88,7 @@ export function Header({
           className={`p-1.5 rounded-md ${
             isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
           } disabled:opacity-30 disabled:cursor-not-allowed transition-colors`}
+          aria-label="Go back"
         >
           <ChevronLeft
             className={`w-4 h-4 ${
@@ -69,6 +102,7 @@ export function Header({
           className={`p-1.5 rounded-md ${
             isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
           } disabled:opacity-30 disabled:cursor-not-allowed transition-colors`}
+          aria-label="Go forward"
         >
           <ChevronRight
             className={`w-4 h-4 ${
@@ -94,6 +128,57 @@ export function Header({
               : "bg-gray-100 border-gray-200 text-gray-900 placeholder-gray-400"
           } border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm`}
         />
+      </div>
+      <div className="relative" ref={settingsRef}>
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          className={`p-2 rounded-lg ${
+            isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+          } transition-colors md:p-1.5 md:rounded-md`}
+          title="Settings"
+        >
+          <Settings
+            className={`w-5 h-5 md:w-4 md:h-4 ${
+              isDarkMode ? "text-gray-300" : "text-gray-700"
+            }`}
+          />
+        </button>
+
+        {showSettings && (
+          <div
+            className={`absolute right-0 mt-2 w-64 rounded-lg shadow-lg border z-50 ${
+              isDarkMode
+                ? "bg-gray-800 border-gray-700"
+                : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="p-3">
+              <h3
+                className={`text-sm font-semibold mb-3 ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
+                Cài đặt
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-sm ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    Chế độ tối
+                  </span>
+                  <ToggleSwitch
+                    enabled={isDarkMode}
+                    onChange={() => setIsDarkMode(!isDarkMode)}
+                    isDarkMode={isDarkMode}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

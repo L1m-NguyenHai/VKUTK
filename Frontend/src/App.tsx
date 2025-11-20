@@ -11,14 +11,12 @@ import { Sidebar } from "./components/Sidebar";
 import { ChatbotPanel } from "./components/ChatbotPanel";
 import { PluginsPage } from "./pages/PluginsPage";
 import { StudentInfoPage } from "./pages/StudentInfoPage";
-import { SettingsPage } from "./pages/SettingsPage";
 import { SchedulePage } from "./pages/SchedulePage";
-import { SessionCapturePage } from "./pages/SessionCapturePage";
 import TimetablePage from "./pages/TimetablePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
-type Page = "plugins" | "info" | "settings" | "schedule" | "session" | "timetable";
+type Page = "plugins" | "info" | "schedule" | "timetable";
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -80,12 +78,6 @@ function App() {
         return <TimetablePage />;
       case "info":
         return <StudentInfoPage isDarkMode={isDarkMode} />;
-      case "session":
-        return <SessionCapturePage isDarkMode={isDarkMode} />;
-      case "settings":
-        return (
-          <SettingsPage isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-        );
     }
   };
 
@@ -123,6 +115,8 @@ function App() {
                     goForward={goForward}
                     isSidebarCollapsed={isSidebarCollapsed}
                     setIsSidebarCollapsed={setIsSidebarCollapsed}
+                    navigateTo={navigateTo}
+                    setIsDarkMode={setIsDarkMode}
                   />
 
                   <div className="flex-1 flex overflow-hidden relative">

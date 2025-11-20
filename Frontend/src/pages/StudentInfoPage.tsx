@@ -9,6 +9,8 @@ import {
   GraduationCap,
   BookOpen,
   TrendingUp,
+  LogIn,
+  Trash2,
 } from "lucide-react";
 
 interface StudentInfoPageProps {
@@ -81,6 +83,12 @@ interface SemesterSummary {
   completedTC: number;
 }
 
+interface SessionStatus {
+  exists: boolean;
+  path: string;
+  size?: number;
+}
+
 const API_BASE_URL =
   typeof window !== "undefined" && window.location.hostname === "localhost"
     ? "http://localhost:8000"
@@ -98,6 +106,17 @@ export function StudentInfoPage({
   );
   const [scrapeReady, setScrapeReady] = useState(false);
   const [scrapeProgress, setScrapeProgress] = useState<ScrapeProgress[]>([]);
+
+  // Session Capture states
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [sessionStatus, setSessionStatus] = useState<SessionStatus | null>(
+    null
+  );
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [apiEndpoint, setApiEndpoint] = useState(API_BASE_URL);
+  const [isEditingEndpoint, setIsEditingEndpoint] = useState(false);
+  const [showSessionSection, setShowSessionSection] = useState(false);
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [activeTab, setActiveTab] = useState<"info" | "grades" | "progress">(
     "info"
@@ -127,6 +146,106 @@ export function StudentInfoPage({
       }
     } catch (error) {
       console.error("Failed to check scrape status:", error);
+    }
+  };
+
+  // Session Capture Functions
+  const checkSession = async () => {
+    setIsCheckingSession(true);
+    try {
+      const url = `${apiEndpoint}/api/check-session`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "cors",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSessionStatus(data);
+        if (data.exists) {
+          setScrapeReady(true);
+        } else {
+          setScrapeReady(false);
+        }
+      }
+    } catch (error) {
+      console.error("Check session error:", error);
+      setSessionStatus(null);
+    } finally {
+      setIsCheckingSession(false);
+    }
+  };
+
+  const captureSession = async () => {
+    setIsCapturing(true);
+    setMessage("Opening browser... Please login to VKU");
+    setMessageType("info");
+
+    try {
+      const response = await fetch(`${apiEndpoint}/api/capture-session`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setMessage(data.message);
+        setMessageType("success");
+        await checkSession();
+      } else {
+        setMessage(data.message || "Failed to capture session");
+        setMessageType("error");
+      }
+    } catch (error) {
+      setMessage(
+        `Error: ${
+          error instanceof Error
+            ? error.message
+            : "Failed to connect to API server"
+        }`
+      );
+      setMessageType("error");
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+  const deleteSession = async () => {
+    if (!confirm("Are you sure you want to delete the session file?")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${apiEndpoint}/api/session`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setMessage("Session deleted successfully");
+        setMessageType("success");
+        setSessionStatus(null);
+        setScrapeReady(false);
+      } else {
+        setMessage(data.message || "Failed to delete session");
+        setMessageType("error");
+      }
+    } catch (error) {
+      setMessage(
+        `Error: ${
+          error instanceof Error
+            ? error.message
+            : "Failed to connect to API server"
+        }`
+      );
+      setMessageType("error");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -282,8 +401,11 @@ export function StudentInfoPage({
   // Scrape and sync data with progress updates
   const scrapeAndSync = async () => {
     if (!scrapeReady) {
-      setMessage("Please capture session first in Session Capture page");
+      setMessage(
+        "Please capture session first. Click 'Show Session Manager' below."
+      );
       setMessageType("error");
+      setShowSessionSection(true);
       return;
     }
 
@@ -408,6 +530,7 @@ export function StudentInfoPage({
 
   useEffect(() => {
     checkScrapeStatus();
+    checkSession();
     loadStudentInfo();
   }, []);
 
@@ -536,6 +659,210 @@ export function StudentInfoPage({
             <Loader2 className="w-4 h-4 flex-shrink-0 mt-0.5 animate-spin" />
           )}
           <span>{message}</span>
+        </div>
+      )}
+
+      {/* Session Manager Toggle */}
+      <div className="flex justify-center">
+        <button
+          onClick={() => setShowSessionSection(!showSessionSection)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+            isDarkMode
+              ? "bg-gray-700 hover:bg-gray-600 text-white"
+              : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+          }`}
+        >
+          <LogIn className="w-3.5 h-3.5" />
+          {showSessionSection ? "Hide Session Manager" : "Show Session Manager"}
+        </button>
+      </div>
+
+      {/* Session Capture Section */}
+      {showSessionSection && (
+        <div
+          className={`rounded-lg border p-3 ${
+            isDarkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+          }`}
+        >
+          <h2
+            className={`text-sm font-bold mb-2 ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
+            VKU Session Manager
+          </h2>
+
+          {/* API Endpoint Configuration */}
+          <div
+            className={`mb-2 p-2 rounded border text-xs ${
+              isDarkMode
+                ? "bg-gray-700 border-gray-600"
+                : "bg-gray-50 border-gray-200"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <label
+                className={`font-medium whitespace-nowrap ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                API:
+              </label>
+              {isEditingEndpoint ? (
+                <>
+                  <input
+                    type="text"
+                    value={apiEndpoint}
+                    onChange={(e) => setApiEndpoint(e.target.value)}
+                    className={`flex-1 px-2 py-1 rounded border ${
+                      isDarkMode
+                        ? "bg-gray-800 border-gray-600 text-white"
+                        : "bg-white border-gray-300 text-gray-900"
+                    }`}
+                  />
+                  <button
+                    onClick={() => setIsEditingEndpoint(false)}
+                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                  >
+                    Save
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span
+                    className={`flex-1 ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    {apiEndpoint}
+                  </span>
+                  <button
+                    onClick={() => setIsEditingEndpoint(true)}
+                    className={`px-2 py-1 rounded ${
+                      isDarkMode
+                        ? "bg-gray-600 hover:bg-gray-500 text-gray-300"
+                        : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                    }`}
+                  >
+                    Edit
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Session Status */}
+          <div
+            className={`mb-2 p-2 rounded border text-xs ${
+              isDarkMode
+                ? "bg-gray-700 border-gray-600"
+                : "bg-gray-50 border-gray-200"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`font-medium ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Status:
+              </span>
+              {sessionStatus ? (
+                sessionStatus.exists ? (
+                  <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Active
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-gray-500">
+                    <XCircle className="w-3.5 h-3.5" />
+                    Not found
+                  </span>
+                )
+              ) : (
+                <span
+                  className={isDarkMode ? "text-gray-400" : "text-gray-600"}
+                >
+                  Loading...
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mb-2">
+            <button
+              onClick={captureSession}
+              disabled={isCapturing}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors ${
+                isCapturing
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              }`}
+            >
+              {isCapturing ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Capturing...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-3.5 h-3.5" />
+                  Capture
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={checkSession}
+              disabled={isCheckingSession}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors ${
+                isDarkMode
+                  ? "bg-gray-700 hover:bg-gray-600 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+              }`}
+            >
+              {isCheckingSession ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5" />
+              )}
+            </button>
+
+            <button
+              onClick={deleteSession}
+              disabled={isDeleting || !sessionStatus?.exists}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded text-xs font-medium transition-colors ${
+                isDeleting || !sessionStatus?.exists
+                  ? "bg-gray-400 cursor-not-allowed text-white"
+                  : "bg-red-600 hover:bg-red-700 text-white"
+              }`}
+            >
+              {isDeleting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Instructions */}
+          <div
+            className={`p-2 rounded border text-xs ${
+              isDarkMode
+                ? "bg-gray-800 border-gray-700 text-gray-400"
+                : "bg-blue-50 border-blue-200 text-gray-700"
+            }`}
+          >
+            <ol className="list-decimal list-inside space-y-0.5">
+              <li>Backend phải chạy trước</li>
+              <li>Click "Capture" để mở browser</li>
+              <li>Đăng nhập VKU trong browser</li>
+              <li>Session tự động lưu sau khi login</li>
+            </ol>
+          </div>
         </div>
       )}
 
@@ -817,191 +1144,120 @@ export function StudentInfoPage({
                     </p>
                   </div>
                 ) : grades.length > 0 ? (
-                  <div className="overflow-x-auto -mx-2 sm:-mx-3">
-                    <div className="inline-block min-w-full align-middle">
+                  <div className="space-y-1.5 max-h-96 overflow-y-auto">
+                    {grades.map((grade, index) => (
                       <div
-                        className={`overflow-hidden rounded-lg border ${
-                          isDarkMode ? "border-gray-700" : "border-gray-200"
+                        key={index}
+                        className={`p-2 rounded-lg border transition-all ${
+                          isDarkMode
+                            ? "bg-gray-700 border-gray-600 hover:bg-gray-650"
+                            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                         }`}
                       >
-                        {/* Table Header */}
-                        <div
-                          className={`grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider ${
-                            isDarkMode
-                              ? "bg-gray-800 text-gray-400"
-                              : "bg-gray-50 text-gray-700"
-                          }`}
-                        >
-                          <div className="col-span-5 sm:col-span-4">
-                            Môn học
-                          </div>
-                          <div className="col-span-2 sm:col-span-2 text-center">
-                            Học kỳ
-                          </div>
-                          <div className="col-span-2 sm:col-span-2 text-center">
-                            Số TC
-                          </div>
-                          <div className="col-span-3 sm:col-span-2 text-center">
-                            Điểm
-                          </div>
-                          <div className="hidden sm:block sm:col-span-2 text-center">
-                            Xếp loại
-                          </div>
-                        </div>
-
-                        {/* Table Body */}
-                        <div className="max-h-[55vh] sm:max-h-[500px] overflow-y-auto">
-                          {grades.map((grade, index) => (
-                            <div
-                              key={index}
-                              className={`grid grid-cols-12 gap-2 px-3 py-3 text-xs border-t transition-colors ${
-                                isDarkMode
-                                  ? "border-gray-700 hover:bg-gray-750"
-                                  : "border-gray-100 hover:bg-gray-50"
+                        {/* Header: Tên môn + Điểm */}
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <div className="flex-1 min-w-0">
+                            <h4
+                              className={`text-sm font-semibold leading-tight mb-1 ${
+                                isDarkMode ? "text-white" : "text-gray-900"
                               }`}
                             >
-                              {/* Tên môn học */}
-                              <div className="col-span-5 sm:col-span-4">
-                                <p
-                                  className={`font-medium leading-tight line-clamp-2 ${
-                                    isDarkMode ? "text-white" : "text-gray-900"
-                                  }`}
-                                >
-                                  {grade.TenHocPhan}
-                                </p>
-                                {grade.MaHocPhan && (
-                                  <p
-                                    className={`text-xs mt-0.5 ${
-                                      isDarkMode
-                                        ? "text-gray-500"
-                                        : "text-gray-500"
-                                    }`}
-                                  >
-                                    {grade.MaHocPhan}
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Học kỳ */}
-                              <div className="col-span-2 sm:col-span-2 flex items-center justify-center">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs font-medium ${
-                                    isDarkMode
-                                      ? "bg-blue-900/50 text-blue-300"
-                                      : "bg-blue-50 text-blue-700"
-                                  }`}
-                                >
-                                  {grade.HocKy?.replace("Học kỳ ", "HK") || "-"}
-                                </span>
-                              </div>
-
-                              {/* Số tín chỉ */}
-                              <div className="col-span-2 sm:col-span-2 flex items-center justify-center">
-                                <span
-                                  className={`font-semibold ${
-                                    isDarkMode
-                                      ? "text-gray-300"
-                                      : "text-gray-700"
-                                  }`}
-                                >
-                                  {grade.SoTC}
-                                </span>
-                              </div>
-
-                              {/* Điểm */}
-                              <div className="col-span-3 sm:col-span-2 flex items-center justify-center">
-                                <div
-                                  className={`px-3 py-1.5 rounded-lg font-bold text-sm ${
-                                    grade.DiemT10 || grade.DiemTongKet
-                                      ? (grade.DiemT10 || grade.DiemTongKet)! >=
-                                        8.5
-                                        ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-sm"
-                                        : (grade.DiemT10 ||
-                                            grade.DiemTongKet)! >= 7
-                                        ? "bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-sm"
-                                        : (grade.DiemT10 ||
-                                            grade.DiemTongKet)! >= 5.5
-                                        ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-sm"
-                                        : (grade.DiemT10 ||
-                                            grade.DiemTongKet)! >= 5
-                                        ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-sm"
-                                        : "bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-sm"
-                                      : isDarkMode
-                                      ? "bg-gray-700 text-gray-400"
-                                      : "bg-gray-100 text-gray-500"
-                                  }`}
-                                >
-                                  {(
-                                    grade.DiemT10 || grade.DiemTongKet
-                                  )?.toFixed(1) || "N/A"}
-                                </div>
-                              </div>
-
-                              {/* Xếp loại - Hidden on mobile */}
-                              <div className="hidden sm:flex sm:col-span-2 items-center justify-center">
-                                {grade.DiemT10 || grade.DiemTongKet ? (
-                                  <span
-                                    className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                                      (grade.DiemT10 || grade.DiemTongKet)! >=
-                                      8.5
-                                        ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
-                                        : (grade.DiemT10 ||
-                                            grade.DiemTongKet)! >= 7
-                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300"
-                                        : (grade.DiemT10 ||
-                                            grade.DiemTongKet)! >= 5.5
-                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300"
-                                        : (grade.DiemT10 ||
-                                            grade.DiemTongKet)! >= 4
-                                        ? "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300"
-                                        : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
-                                    }`}
-                                  >
-                                    {(grade.DiemT10 || grade.DiemTongKet)! >=
-                                    8.5
-                                      ? "A"
-                                      : (grade.DiemT10 || grade.DiemTongKet)! >=
-                                        7
-                                      ? "B"
-                                      : (grade.DiemT10 || grade.DiemTongKet)! >=
-                                        5.5
-                                      ? "C"
-                                      : (grade.DiemT10 || grade.DiemTongKet)! >=
-                                        4
-                                      ? "D"
-                                      : "F"}
-                                  </span>
-                                ) : (
-                                  <span
-                                    className={`text-xs ${
-                                      isDarkMode
-                                        ? "text-gray-500"
-                                        : "text-gray-400"
-                                    }`}
-                                  >
-                                    -
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Summary Footer */}
-                        <div
-                          className={`grid grid-cols-12 gap-2 px-3 py-2.5 text-xs font-semibold border-t ${
-                            isDarkMode
-                              ? "bg-gray-800 border-gray-700 text-gray-300"
-                              : "bg-gray-50 border-gray-200 text-gray-700"
-                          }`}
-                        >
-                          <div className="col-span-7 sm:col-span-6">
-                            Tổng: {grades.length} môn
+                              {grade.TenHocPhan}
+                            </h4>
+                            {grade.MaHocPhan && (
+                              <p
+                                className={`text-xs ${
+                                  isDarkMode ? "text-gray-400" : "text-gray-500"
+                                }`}
+                              >
+                                {grade.MaHocPhan}
+                              </p>
+                            )}
                           </div>
-                          <div className="col-span-5 sm:col-span-6 text-right">
-                            {grades.reduce((sum, g) => sum + g.SoTC, 0)} tín chỉ
+                          <div
+                            className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center font-bold text-base shadow-sm ${
+                              grade.DiemT10 || grade.DiemTongKet
+                                ? (grade.DiemT10 || grade.DiemTongKet)! >= 8.5
+                                  ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white"
+                                  : (grade.DiemT10 || grade.DiemTongKet)! >= 7
+                                  ? "bg-gradient-to-br from-blue-500 to-cyan-600 text-white"
+                                  : (grade.DiemT10 || grade.DiemTongKet)! >= 5.5
+                                  ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white"
+                                  : (grade.DiemT10 || grade.DiemTongKet)! >= 5
+                                  ? "bg-gradient-to-br from-orange-500 to-red-500 text-white"
+                                  : "bg-gradient-to-br from-red-600 to-rose-700 text-white"
+                                : isDarkMode
+                                ? "bg-gray-600 text-gray-400"
+                                : "bg-gray-200 text-gray-500"
+                            }`}
+                          >
+                            {(grade.DiemT10 || grade.DiemTongKet)?.toFixed(1) ||
+                              "N/A"}
                           </div>
                         </div>
+
+                        {/* Footer: Meta info */}
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span
+                            className={`px-1.5 py-0.5 rounded font-medium ${
+                              isDarkMode
+                                ? "bg-blue-900/50 text-blue-300"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            {grade.HocKy?.replace("Học kỳ ", "HK") || "-"}
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded font-medium ${
+                              isDarkMode
+                                ? "bg-purple-900/50 text-purple-300"
+                                : "bg-purple-100 text-purple-700"
+                            }`}
+                          >
+                            {grade.SoTC} TC
+                          </span>
+                          {(grade.DiemT10 || grade.DiemTongKet) && (
+                            <span
+                              className={`px-1.5 py-0.5 rounded-full font-bold ml-auto ${
+                                (grade.DiemT10 || grade.DiemTongKet)! >= 8.5
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
+                                  : (grade.DiemT10 || grade.DiemTongKet)! >= 7
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300"
+                                  : (grade.DiemT10 || grade.DiemTongKet)! >= 5.5
+                                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300"
+                                  : (grade.DiemT10 || grade.DiemTongKet)! >= 4
+                                  ? "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
+                              }`}
+                            >
+                              {(grade.DiemT10 || grade.DiemTongKet)! >= 8.5
+                                ? "A"
+                                : (grade.DiemT10 || grade.DiemTongKet)! >= 7
+                                ? "B"
+                                : (grade.DiemT10 || grade.DiemTongKet)! >= 5.5
+                                ? "C"
+                                : (grade.DiemT10 || grade.DiemTongKet)! >= 4
+                                ? "D"
+                                : "F"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Summary */}
+                    <div
+                      className={`p-2 rounded-lg border font-semibold text-xs mt-2 ${
+                        isDarkMode
+                          ? "bg-gray-800 border-gray-700 text-gray-300"
+                          : "bg-gray-100 border-gray-300 text-gray-700"
+                      }`}
+                    >
+                      <div className="flex justify-between">
+                        <span>Tổng: {grades.length} môn</span>
+                        <span>
+                          {grades.reduce((sum, g) => sum + g.SoTC, 0)} tín chỉ
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1039,17 +1295,18 @@ export function StudentInfoPage({
                     </p>
                   </div>
                 ) : semesterSummaries.length > 0 ? (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
                     {semesterSummaries.map((semester) => (
                       <div
                         key={semester.HocKy}
-                        className={`p-2.5 rounded-lg border ${
+                        className={`p-2 rounded-lg border ${
                           isDarkMode
                             ? "bg-gray-700 border-gray-600"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
-                        <div className="flex justify-between items-center mb-2">
+                        {/* Semester Header */}
+                        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-600 dark:border-gray-600">
                           <h3
                             className={`text-sm font-bold ${
                               isDarkMode ? "text-white" : "text-gray-900"
@@ -1057,91 +1314,106 @@ export function StudentInfoPage({
                           >
                             Học kỳ {semester.HocKy}
                           </h3>
-                          <div className="flex gap-2 text-xs">
+                          <div className="flex gap-1.5 text-xs">
                             <span
-                              className={`px-2 py-0.5 rounded ${
+                              className={`px-1.5 py-0.5 rounded font-medium ${
                                 isDarkMode
-                                  ? "bg-blue-900 text-blue-200"
-                                  : "bg-blue-100 text-blue-800"
+                                  ? "bg-blue-900/50 text-blue-300"
+                                  : "bg-blue-100 text-blue-700"
                               }`}
                             >
                               {semester.totalTC} TC
                             </span>
                             <span
-                              className={`px-2 py-0.5 rounded ${
+                              className={`px-1.5 py-0.5 rounded font-medium ${
                                 isDarkMode
-                                  ? "bg-green-900 text-green-200"
-                                  : "bg-green-100 text-green-800"
+                                  ? "bg-green-900/50 text-green-300"
+                                  : "bg-green-100 text-green-700"
                               }`}
                             >
                               {semester.completedTC} đạt
                             </span>
                           </div>
                         </div>
+
+                        {/* Courses List */}
                         <div className="space-y-1.5">
                           {semester.courses.map((course, idx) => (
                             <div
                               key={idx}
-                              className={`flex items-center justify-between p-1.5 rounded text-xs ${
-                                isDarkMode ? "bg-gray-800" : "bg-white"
+                              className={`p-2 rounded-lg border transition-all ${
+                                isDarkMode
+                                  ? "bg-gray-600 border-gray-500 hover:bg-gray-550"
+                                  : "bg-white border-gray-200 hover:bg-gray-50"
                               }`}
                             >
-                              <div className="flex-1 min-w-0">
-                                <p
-                                  className={`font-medium truncate ${
-                                    isDarkMode
-                                      ? "text-gray-200"
-                                      : "text-gray-900"
-                                  }`}
-                                >
-                                  {course.TenHocPhan}
-                                </p>
-                                <div className="flex gap-2 mt-0.5">
-                                  <span
-                                    className={
+                              {/* Course Header */}
+                              <div className="flex items-start justify-between gap-2 mb-1.5">
+                                <div className="flex-1 min-w-0">
+                                  <h4
+                                    className={`text-xs font-semibold leading-tight ${
                                       isDarkMode
-                                        ? "text-gray-400"
-                                        : "text-gray-600"
-                                    }
+                                        ? "text-white"
+                                        : "text-gray-900"
+                                    }`}
                                   >
-                                    {course.SoTC} TC
-                                  </span>
-                                  {course.BatBuoc && (
-                                    <span className="text-orange-600 dark:text-orange-400">
-                                      • Bắt buộc
-                                    </span>
-                                  )}
+                                    {course.TenHocPhan}
+                                  </h4>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2 ml-2">
                                 {course.DiemChu && (
-                                  <span
-                                    className={`px-2 py-0.5 rounded font-semibold ${
+                                  <div
+                                    className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ${
                                       ["A", "A+", "B+", "B"].includes(
                                         course.DiemChu
                                       )
-                                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                        ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white"
                                         : ["C+", "C", "D+", "D"].includes(
                                             course.DiemChu
                                           )
-                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                        ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white"
                                         : course.DiemChu === "F"
-                                        ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                                        ? "bg-gradient-to-br from-red-600 to-rose-700 text-white"
+                                        : isDarkMode
+                                        ? "bg-gray-500 text-gray-300"
+                                        : "bg-gray-200 text-gray-600"
                                     }`}
                                   >
                                     {course.DiemChu}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Course Footer */}
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <span
+                                  className={`px-1.5 py-0.5 rounded font-medium ${
+                                    isDarkMode
+                                      ? "bg-purple-900/50 text-purple-300"
+                                      : "bg-purple-100 text-purple-700"
+                                  }`}
+                                >
+                                  {course.SoTC} TC
+                                </span>
+                                {course.BatBuoc && (
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded font-medium ${
+                                      isDarkMode
+                                        ? "bg-orange-900/50 text-orange-300"
+                                        : "bg-orange-100 text-orange-700"
+                                    }`}
+                                  >
+                                    Bắt buộc
                                   </span>
                                 )}
                                 {course.DiemT4 && (
                                   <span
-                                    className={`font-medium ${
+                                    className={`px-1.5 py-0.5 rounded font-medium ml-auto ${
                                       isDarkMode
-                                        ? "text-gray-300"
-                                        : "text-gray-700"
+                                        ? "bg-gray-700 text-gray-300"
+                                        : "bg-gray-100 text-gray-700"
                                     }`}
                                   >
-                                    ({course.DiemT4})
+                                    {course.DiemT4} / 4.0
                                   </span>
                                 )}
                               </div>
