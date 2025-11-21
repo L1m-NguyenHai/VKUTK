@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
 import os
 import sys
 import json
@@ -15,11 +17,61 @@ from typing import Optional, List, Dict, Any
 sys.path.insert(0, str(Path(__file__).parent / "ManualScrape" / "VKU_scraper"))
 
 from scraper import VKUScraperManager
-from Supabase import sinh_vien_repo, diem_repo, auth_repo, tien_do_hoc_tap_repo
+from Supabase import sinh_vien_repo, diem_repo, auth_repo, tien_do_hoc_tap_repo, course_schedule_repo
 from auth_utils import get_current_user_id
 from cog_loader import CogLoader
 
-app = FastAPI(title="VKU Toolkit API")
+# Initialize cog loader (will be set in lifespan)
+cog_loader = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown"""
+    global cog_loader
+    # Startup: Load all cogs
+    cog_loader = CogLoader(app)
+    cog_loader.load_all_cogs()
+    print("[Startup] All cogs loaded")
+    
+    yield
+    
+    # Shutdown: Cleanup all cogs
+    if cog_loader:
+        for cog_name in list(cog_loader.loaded_cogs.keys()):
+            cog_loader.unload_cog(cog_name)
+    print("[Shutdown] All cogs unloaded")
+
+app = FastAPI(
+    title="VKU Toolkit API",
+    lifespan=lifespan,
+    swagger_ui_parameters={"persistAuthorization": True}
+)
+
+# Add security scheme to OpenAPI schema
+from fastapi.openapi.utils import get_openapi
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        openapi_version=app.openapi_version,
+        description=app.description,
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your Supabase access token"
+        }
+    }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 # Configure CORS for Tauri and development
 app.add_middleware(
@@ -90,6 +142,24 @@ class GradeResponse(BaseModel):
 class AllStudentsResponse(BaseModel):
     count: int
     students: List[Dict[str, Any]]
+
+# ==================== COURSE RECOMMENDATION MODELS ====================
+
+class RemainingCourseResponse(BaseModel):
+    TenHocPhan: str
+    SoTC: int
+    HocKy: int
+    BatBuoc: bool
+    status: str  # "not_started" or "failed" (DiemChu == "F")
+
+class CourseScheduleResponse(BaseModel):
+    stt_id: int
+    course_name: str
+    lecturer_name: Optional[str] = None
+    day_and_time: Optional[str] = None
+    classroom: Optional[str] = None
+    study_weeks: Optional[str] = None
+    capacity: Optional[int] = None
 
 # ==================== AUTH REQUEST/RESPONSE MODELS ====================
 
@@ -416,6 +486,27 @@ async def get_all_students(authorization: str = Header(None)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/me/student-id")
+async def get_my_student_id(authorization: str = Header(None)):
+    """
+    Lấy StudentID của user hiện tại
+    Requires: Authorization header với Bearer token
+    Returns: {"student_id": "2157010001"} hoặc {"student_id": null}
+    """
+    try:
+        # Get current user ID from token
+        user_id = get_current_user_id(authorization)
+        
+        # Get student info for this user
+        students = sinh_vien_repo.get_students_by_user(user_id)
+        if students and len(students) > 0:
+            return {"student_id": students[0]["StudentID"]}
+        return {"student_id": None}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/students/{student_id}", response_model=StudentResponse)
 async def get_student(student_id: str, authorization: str = Header(None)):
     """
@@ -469,6 +560,97 @@ async def get_student_academic_progress(student_id: str, authorization: str = He
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== COURSE RECOMMENDATION ROUTES ====================
+
+@app.get("/api/students/{student_id}/courses/remaining", response_model=List[RemainingCourseResponse])
+async def get_remaining_courses(student_id: str, authorization: str = Header(None)):
+    """
+    Lấy danh sách các môn học chưa hoàn thành của sinh viên
+    - Môn chưa học (không có trong TienDoHocTap)
+    - Môn bị F (DiemChu = 'F' hoặc DiemT4 < 1.0)
+    Requires: Authorization header với Bearer token
+    """
+    try:
+        # Get current user ID from token
+        user_id = get_current_user_id(authorization)
+        
+        # Get all academic progress of student
+        all_progress = tien_do_hoc_tap_repo.get_academic_progress_by_user(student_id, user_id)
+        
+        if not all_progress:
+            raise HTTPException(status_code=404, detail="No academic progress found for this student")
+        
+        # Find courses that are not completed (DiemChu == "F" or DiemT4 < 1.0 or grade is None/empty)
+        remaining_courses = []
+        for course in all_progress:
+            diem_chu = course.get("DiemChu", "").strip()
+            diem_t4 = course.get("DiemT4", "")
+            
+            # Check if course is failed or not completed
+            is_failed = False
+            if diem_chu == "F":
+                is_failed = True
+            elif diem_t4:
+                try:
+                    # DiemT4 might be string, convert to float
+                    if isinstance(diem_t4, str):
+                        diem_t4 = float(diem_t4)
+                    if diem_t4 < 1.0:
+                        is_failed = True
+                except (ValueError, TypeError):
+                    pass
+            
+            # Check if not graded yet (no DiemChu or empty)
+            is_not_started = not diem_chu or diem_chu == ""
+            
+            if is_failed or is_not_started:
+                remaining_courses.append(RemainingCourseResponse(
+                    TenHocPhan=course.get("TenHocPhan", ""),
+                    SoTC=course.get("SoTC", 0),
+                    HocKy=course.get("HocKy", 0),
+                    BatBuoc=course.get("BatBuoc", False),
+                    status="failed" if is_failed else "not_started"
+                ))
+        
+        return remaining_courses
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/courses/schedule", response_model=List[CourseScheduleResponse])
+async def get_course_schedules(
+    course_names: Optional[str] = None,  # Comma-separated course names
+    lecturer: Optional[str] = None,
+    day: Optional[str] = None
+):
+    """
+    Lấy danh sách lớp học phần có sẵn
+    - course_names: Danh sách tên môn học (phân cách bằng dấu phẩy)
+    - lecturer: Tên giảng viên (tìm kiếm gần đúng)
+    - day: Ngày trong tuần (ví dụ: "Thứ 2", "Thứ 3")
+    """
+    try:
+        courses = []
+        
+        if course_names:
+            # Search by multiple course names
+            names_list = [name.strip() for name in course_names.split(",")]
+            courses = course_schedule_repo.search_courses(names_list)
+        elif lecturer:
+            # Search by lecturer
+            courses = course_schedule_repo.get_courses_by_lecturer(lecturer)
+        elif day:
+            # Search by day
+            courses = course_schedule_repo.get_courses_by_day(day)
+        else:
+            # Get all courses
+            courses = course_schedule_repo.get_all_courses()
+        
+        return [CourseScheduleResponse(**course) for course in courses]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/stats")
 async def get_stats():
     """
@@ -491,15 +673,49 @@ async def get_stats():
 
 # ==================== PLUGIN MANAGEMENT ====================
 
-# Initialize cog loader
-cog_loader = CogLoader(app)
-
 @app.get("/api/plugins")
 async def get_plugins():
     """Get list of all loaded plugins"""
     return {
         "success": True,
         "plugins": cog_loader.get_loaded_cogs()
+    }
+
+@app.get("/api/plugins/commands")
+async def get_available_commands():
+    """Get all available slash commands from enabled cogs"""
+    commands = []
+    for cog_instance in cog_loader.loaded_cogs.values():
+        if cog_instance.is_enabled():
+            for cmd in cog_instance.metadata.commands:
+                commands.append({
+                    "cog_id": cog_instance.get_cog_id(),
+                    "cog_name": cog_instance.metadata.name,
+                    "icon": cog_instance.metadata.icon,
+                    "color": cog_instance.metadata.color,
+                    **cmd.model_dump()
+                })
+    return {
+        "success": True,
+        "commands": commands
+    }
+
+@app.post("/api/plugins/{cog_name}/enable")
+async def enable_plugin(cog_name: str):
+    """Enable a specific plugin"""
+    success = cog_loader.enable_cog(cog_name)
+    return {
+        "success": success,
+        "message": f"Plugin {cog_name} {'enabled' if success else 'failed to enable'}"
+    }
+
+@app.post("/api/plugins/{cog_name}/disable")
+async def disable_plugin(cog_name: str):
+    """Disable a specific plugin"""
+    success = cog_loader.disable_cog(cog_name)
+    return {
+        "success": success,
+        "message": f"Plugin {cog_name} {'disabled' if success else 'failed to disable'}"
     }
 
 @app.post("/api/plugins/{cog_name}/reload")
@@ -511,20 +727,9 @@ async def reload_plugin(cog_name: str):
         "message": f"Plugin {cog_name} {'reloaded' if success else 'failed to reload'}"
     }
 
-@app.on_event("startup")
-async def startup_event():
-    """Load all cogs on startup"""
-    cog_loader.load_all_cogs()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup all cogs on shutdown"""
-    for cog_name in list(cog_loader.loaded_cogs.keys()):
-        cog_loader.unload_cog(cog_name)
-
 # Alias for uvicorn (allows both `uvicorn main:app` and `uvicorn main:main`)
 main = app
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

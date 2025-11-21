@@ -8,6 +8,6 @@ các function backend cần nằm trong đúng folder , là 1 module và call qu
 database function nằm trong folder supabase
 scraper function nằm trong folder ManualScrape/VKU_scraper
 
-Không tạo các file .md lẻ tẻ hay document rời rạc, tất cả hướng dẫn đều nằm trong file này.
+Không tạo các file .md lẻ tẻ hay document rời rạc, tất cả hướng dẫn đều nằm trong file readme.md.
 
 dùng MCP supbabase để tương tác database.

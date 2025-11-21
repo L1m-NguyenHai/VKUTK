@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from client import supabase_client
+from .client import supabase_client
 
 class BaseRepository:
     """Base class cho các repository"""

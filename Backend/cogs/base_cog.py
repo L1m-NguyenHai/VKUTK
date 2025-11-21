@@ -11,6 +11,23 @@ from fastapi import FastAPI, APIRouter
 from datetime import datetime
 
 
+class CommandField(BaseModel):
+    """Field definition for a command"""
+    name: str
+    label: str
+    type: str = "text"  # text, textarea, select, number
+    placeholder: Optional[str] = None
+    required: bool = True
+    options: Optional[List[str]] = None  # For select type
+
+
+class CommandDefinition(BaseModel):
+    """Definition for a slash command"""
+    command: str  # e.g., "sto"
+    description: str
+    fields: List[CommandField]
+
+
 class CogMetadata(BaseModel):
     """Metadata for each cog/plugin"""
     name: str
@@ -21,6 +38,7 @@ class CogMetadata(BaseModel):
     dependencies: List[str] = []
     icon: Optional[str] = None  # Lucide icon name
     color: Optional[str] = None  # Gradient color classes
+    commands: List[CommandDefinition] = []  # Slash commands this cog provides
 
 
 class BaseCog(ABC):
@@ -59,6 +77,7 @@ class BaseCog(ABC):
             author="System"
         )
         self.loaded_at = datetime.now()
+        self._enabled = True
         
     @abstractmethod
     def setup(self):
@@ -83,12 +102,29 @@ class BaseCog(ABC):
     
     def get_info(self) -> Dict[str, Any]:
         """Get cog information"""
+        # Sync metadata.enabled with _enabled before returning
+        self.metadata.enabled = self._enabled
         return {
             "id": self.get_cog_id(),
             "metadata": self.metadata.model_dump(),
             "loaded_at": self.loaded_at.isoformat(),
-            "routes_count": len(self.router.routes)
+            "routes_count": len(self.router.routes),
+            "enabled": self._enabled
         }
+    
+    def enable(self):
+        """Enable this cog"""
+        self._enabled = True
+        self.metadata.enabled = True
+    
+    def disable(self):
+        """Disable this cog"""
+        self._enabled = False
+        self.metadata.enabled = False
+    
+    def is_enabled(self) -> bool:
+        """Check if cog is enabled"""
+        return self._enabled
     
     def cleanup(self):
         """

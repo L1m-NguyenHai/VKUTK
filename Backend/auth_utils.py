@@ -20,6 +20,7 @@ def get_current_user_id(authorization: Optional[str] = Header(None)) -> str:
     Raises:
         HTTPException: Nếu token invalid hoặc không có
     """
+    print(f"[AUTH] Received authorization header: {authorization[:50] if authorization else 'None'}...")
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header required")
     

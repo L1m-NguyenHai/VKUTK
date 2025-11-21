@@ -10,7 +10,7 @@
 - 📈 **Tiến độ Học tập** - Tổng hợp theo học kỳ với cache 5 phút
 - 🔌 **Plugin System (Cogs)** - Mở rộ tính năng dễ dàng, hỗ trợ n8n webhook
 - 💬 **Chatbot Integration** - Chat panel tích hợp n8n chatbot webhook
-- 🎨 **Dark/Light Mode** - Giao diện responsive, mobile-first
+- 🎨 **3 Theme Modes** - Dark, Light, và Cream (kem sữa) theme, giao diện responsive, mobile-first
 - 🔄 **Session Management** - Capture và tái sử dụng VKU session
 - 🛡️ **Privacy Consent** - Yêu cầu đồng ý trước khi scrape dữ liệu
 
@@ -200,10 +200,22 @@ DELETE /api/session              # Xóa session
 ### 👥 Students & Grades
 
 ```
-GET    /api/students             # Danh sách sinh viên (của user)
-GET    /api/students/{id}        # Thông tin sinh viên
-GET    /api/students/{id}/grades # Điểm của sinh viên
-POST   /api/scrape-and-sync      # Scrape data từ VKU
+GET    /api/students                        # Danh sách sinh viên (của user)
+GET    /api/students/{id}                   # Thông tin sinh viên
+GET    /api/students/{id}/grades            # Điểm của sinh viên
+GET    /api/students/{id}/tien-do-hoc-tap   # Tiến độ học tập
+GET    /api/students/{id}/courses/remaining # Môn chưa hoàn thành (F hoặc chưa học)
+POST   /api/scrape-and-sync                 # Scrape data từ VKU
+```
+
+### 📚 Course Schedule
+
+```
+GET    /api/courses/schedule                # Danh sách lớp học phần
+# Query params:
+#   - course_names: Tên môn (phân cách bằng dấu phẩy)
+#   - lecturer: Tên giảng viên (tìm gần đúng)
+#   - day: Ngày trong tuần (ví dụ: "Thứ 2")
 ```
 
 ### 🔌 Plugins
@@ -282,6 +294,120 @@ diem_repo.create_grade(data)
 diem_repo.bulk_insert_grades([data1, data2, ...])
 diem_repo.get_grades_by_subject("Lập trình Python")
 diem_repo.get_grades_by_semester("Học kỳ 1")
+
+# CourseSchedule Repository (NEW)
+course_schedule_repo.get_all_courses()
+course_schedule_repo.get_course_by_name("Lập trình Python")
+course_schedule_repo.search_courses(["Python", "Java", "C++"])
+course_schedule_repo.get_courses_by_lecturer("Nguyễn Văn A")
+course_schedule_repo.get_courses_by_day("Thứ 2")
+```
+
+## 🎓 Course Recommendation API
+
+### GET `/api/students/{student_id}/courses/remaining`
+
+Lấy danh sách môn học chưa hoàn thành (bị F hoặc chưa học)
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+[
+  {
+    "TenHocPhan": "Lập trình Python",
+    "SoTC": 3,
+    "HocKy": 2,
+    "BatBuoc": true,
+    "status": "failed" // "failed" hoặc "not_started"
+  },
+  {
+    "TenHocPhan": "Cơ sở dữ liệu",
+    "SoTC": 4,
+    "HocKy": 3,
+    "BatBuoc": true,
+    "status": "not_started"
+  }
+]
+```
+
+### GET `/api/courses/schedule`
+
+Lấy danh sách lớp học phần có sẵn
+
+**Query Parameters:**
+
+- `course_names` (optional): Tên môn học (phân cách bằng dấu phẩy)
+- `lecturer` (optional): Tên giảng viên (tìm gần đúng)
+- `day` (optional): Ngày trong tuần (ví dụ: "Thứ 2", "Thứ 3")
+
+**Ví dụ 1:** Tìm lớp theo tên môn
+
+```
+GET /api/courses/schedule?course_names=Lập trình Python,Cơ sở dữ liệu
+```
+
+**Ví dụ 2:** Tìm lớp theo giảng viên
+
+```
+GET /api/courses/schedule?lecturer=Nguyễn Văn A
+```
+
+**Ví dụ 3:** Tìm lớp học vào Thứ 2
+
+```
+GET /api/courses/schedule?day=Thứ 2
+```
+
+**Response:**
+
+```json
+[
+  {
+    "stt_id": 1,
+    "course_name": "Lập trình Python",
+    "lecturer_name": "TS. Nguyễn Văn A",
+    "day_and_time": "Thứ 2: 07:00 - 09:25",
+    "classroom": "C101",
+    "study_weeks": "1-15",
+    "capacity": 50
+  },
+  {
+    "stt_id": 2,
+    "course_name": "Cơ sở dữ liệu",
+    "lecturer_name": "ThS. Trần Thị B",
+    "day_and_time": "Thứ 3: 09:35 - 11:50",
+    "classroom": "C102",
+    "study_weeks": "1-15",
+    "capacity": 45
+  }
+]
+```
+
+### 🤖 Use Case: AI Course Recommendation
+
+**Workflow:**
+
+1. AI Agent (n8n) gọi `/api/students/{id}/courses/remaining` để lấy môn chưa hoàn thành
+2. Sinh viên chat với AI: "Tôi muốn học với thầy Nguyễn Văn A, buổi sáng"
+3. AI gọi `/api/courses/schedule?lecturer=Nguyễn Văn A` và filter theo thời gian buổi sáng
+4. AI gợi ý lịch học phù hợp, tránh xung đột thời gian
+5. Sinh viên xác nhận → AI tạo lịch đăng ký
+
+**Ví dụ Flow n8n:**
+
+```
+[Webhook Trigger] → [Parse User Message]
+  → [HTTP: GET remaining courses]
+  → [HTTP: GET course schedule]
+  → [AI Filter & Recommend]
+  → [Format Response]
+  → [Webhook Response]
 ```
 
 ## 🔌 Plugin System (Cogs)
@@ -493,6 +619,7 @@ Tự động load khi backend start. Kết nối tới N8N webhook: `https://n8n
 **POST** `/api/plugins/n8nchatbot/send`
 
 Request body:
+
 ```json
 {
   "message": "Xin chào!",
@@ -501,12 +628,13 @@ Request body:
 ```
 
 Response:
+
 ```json
 {
   "success": true,
   "status_code": 200,
   "message": "Chào bạn!",
-  "response": [{"output": "Chào bạn!"}]
+  "response": [{ "output": "Chào bạn!" }]
 }
 ```
 

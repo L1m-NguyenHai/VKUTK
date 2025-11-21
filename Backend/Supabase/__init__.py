@@ -9,6 +9,7 @@ from .Diem import diem_repo, DiemRepository
 from .TienDoHocTap import tien_do_hoc_tap_repo, TienDoHocTapRepository
 from .DanhSachLopHP import danh_sach_lop_hp_repo, DanhSachLopHPRepository
 from .auth import auth_repo, AuthRepository
+from .course_schedule import course_schedule_repo, CourseScheduleRepository
 
 __all__ = [
     'supabase_client',
@@ -22,4 +23,6 @@ __all__ = [
     'DanhSachLopHPRepository',
     'auth_repo',
     'AuthRepository',
+    'course_schedule_repo',
+    'CourseScheduleRepository',
 ]

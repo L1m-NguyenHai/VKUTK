@@ -1,0 +1,103 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.DanhSachLopHP (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  HocKy text,
+  NamHoc text,
+  TenLopHocPhan text,
+  GiangVien text,
+  ThoiKhoaBieu text,
+  PhongHoc text,
+  TuanHoc text,
+  SiSo integer,
+  created_at timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  CONSTRAINT DanhSachLopHP_pkey PRIMARY KEY (id),
+  CONSTRAINT DanhSachLopHP_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.Diem (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  StudentID text,
+  TenHocPhan text,
+  SoTC smallint,
+  DiemT10 real,
+  HocKy text,
+  user_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT Diem_pkey PRIMARY KEY (id),
+  CONSTRAINT Diem_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT Diem_StudentID_fkey FOREIGN KEY (StudentID) REFERENCES public.SinhVien(StudentID)
+);
+CREATE TABLE public.SinhVien (
+  StudentID text NOT NULL,
+  ho_va_ten character varying,
+  lop character varying,
+  khoa character varying,
+  chuyen_nganh character varying,
+  khoa_hoc character varying,
+  user_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT SinhVien_pkey PRIMARY KEY (StudentID),
+  CONSTRAINT SinhVien_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.TienDoHocTap (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  StudentID text,
+  TenHocPhan text,
+  HocKy smallint,
+  BatBuoc boolean,
+  DiemT4 text,
+  DiemChu text,
+  SoTC smallint,
+  user_id uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT TienDoHocTap_pkey PRIMARY KEY (id),
+  CONSTRAINT TienDoHocTap_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT TienDoHocTap_StudentID_fkey FOREIGN KEY (StudentID) REFERENCES public.SinhVien(StudentID)
+);
+CREATE TABLE public.announcement (
+  id text NOT NULL,
+  title text NOT NULL,
+  content text NOT NULL,
+  url text NOT NULL,
+  date_announced date NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  noti_type text NOT NULL,
+  CONSTRAINT announcement_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.course_schedule (
+  stt_id integer NOT NULL,
+  course_name character varying NOT NULL,
+  lecturer_name character varying,
+  day_and_time character varying,
+  classroom character varying,
+  study_weeks character varying,
+  capacity integer,
+  CONSTRAINT course_schedule_pkey PRIMARY KEY (stt_id, course_name)
+);
+CREATE TABLE public.documents (
+  id bigint NOT NULL DEFAULT nextval('documents_id_seq'::regclass),
+  content text,
+  metadata jsonb,
+  embedding USER-DEFINED,
+  CONSTRAINT documents_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.fb_post (
+  id text NOT NULL,
+  CONSTRAINT fb_post_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.fb_post_date (
+  fb_post_id text NOT NULL,
+  announcement_id text NOT NULL,
+  date_uploaded timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT fb_post_date_announcement_id_fkey FOREIGN KEY (announcement_id) REFERENCES public.announcement(id),
+  CONSTRAINT fb_post_date_fb_post_id_fkey FOREIGN KEY (fb_post_id) REFERENCES public.fb_post(id)
+);
+CREATE TABLE public.n8n_chat_histories (
+  id integer NOT NULL DEFAULT nextval('n8n_chat_histories_id_seq'::regclass),
+  session_id character varying NOT NULL,
+  message jsonb NOT NULL,
+  CONSTRAINT n8n_chat_histories_pkey PRIMARY KEY (id)
+);

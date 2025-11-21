@@ -1,13 +1,14 @@
 import { useState } from "react";
+import type { ThemeMode } from "../App";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LogIn, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 
 interface LoginPageProps {
-  isDarkMode: boolean;
+  themeMode: ThemeMode;
 }
 
-export function LoginPage({ isDarkMode }: LoginPageProps) {
+export function LoginPage({ themeMode }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,7 +35,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div
         className={`max-w-md w-full space-y-8 p-8 rounded-lg shadow-lg ${
-          isDarkMode ? "bg-gray-800" : "bg-white"
+          themeMode === "dark" ? "bg-gray-800" : "bg-white"
         }`}
       >
         {/* Header */}
@@ -44,13 +45,13 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
           </div>
           <h2
             className={`text-3xl font-bold ${
-              isDarkMode ? "text-white" : "text-gray-900"
+              themeMode === "dark" ? "text-white" : "text-gray-900"
             }`}
           >
             Welcome Back
           </h2>
           <p
-            className={`mt-2 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+            className={`mt-2 ${themeMode === "dark" ? "text-gray-400" : "text-gray-600"}`}
           >
             Sign in to your VKU Toolkit account
           </p>
@@ -72,7 +73,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
               <label
                 htmlFor="email"
                 className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                  themeMode === "dark" ? "text-gray-300" : "text-gray-700"
                 }`}
               >
                 Email address
@@ -81,7 +82,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail
                     className={`h-5 w-5 ${
-                      isDarkMode ? "text-gray-500" : "text-gray-400"
+                      themeMode === "dark" ? "text-gray-500" : "text-gray-400"
                     }`}
                   />
                 </div>
@@ -94,7 +95,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    isDarkMode
+                    themeMode === "dark"
                       ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                   }`}
@@ -108,7 +109,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
               <label
                 htmlFor="password"
                 className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                  themeMode === "dark" ? "text-gray-300" : "text-gray-700"
                 }`}
               >
                 Password
@@ -117,7 +118,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock
                     className={`h-5 w-5 ${
-                      isDarkMode ? "text-gray-500" : "text-gray-400"
+                      themeMode === "dark" ? "text-gray-500" : "text-gray-400"
                     }`}
                   />
                 </div>
@@ -130,7 +131,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    isDarkMode
+                    themeMode === "dark"
                       ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                   }`}
@@ -177,7 +178,7 @@ export function LoginPage({ isDarkMode }: LoginPageProps) {
           <div className="text-center">
             <span
               className={`text-sm ${
-                isDarkMode ? "text-gray-400" : "text-gray-600"
+                themeMode === "dark" ? "text-gray-400" : "text-gray-600"
               }`}
             >
               Don't have an account?{" "}

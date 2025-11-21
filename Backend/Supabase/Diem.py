@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from base import BaseRepository
+from .base import BaseRepository
 
 class DiemRepository(BaseRepository):
     """Repository cho bảng Diem"""

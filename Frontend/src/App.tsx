@@ -8,7 +8,7 @@ import {
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
-import { ChatbotPanel } from "./components/ChatbotPanel";
+import ChatPage from "./pages/ChatPage";
 import { PluginsPage } from "./pages/PluginsPage";
 import { StudentInfoPage } from "./pages/StudentInfoPage";
 import { SchedulePage } from "./pages/SchedulePage";
@@ -16,7 +16,8 @@ import TimetablePage from "./pages/TimetablePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 
-type Page = "plugins" | "info" | "schedule" | "timetable";
+type Page = "chat" | "plugins" | "info" | "schedule" | "timetable";
+export type ThemeMode = "dark" | "light" | "cream";
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -38,13 +39,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>("plugins");
+  const [currentPage, setCurrentPage] = useState<Page>("chat");
   const [searchQuery, setSearchQuery] = useState("");
-  const [history, setHistory] = useState<Page[]>(["plugins"]);
+  const [history, setHistory] = useState<Page[]>(["chat"]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   const navigateTo = (page: Page) => {
     const newHistory = history.slice(0, historyIndex + 1);
@@ -70,14 +70,16 @@ function App() {
 
   const renderContent = () => {
     switch (currentPage) {
+      case "chat":
+        return <ChatPage themeMode={themeMode} />;
       case "plugins":
-        return <PluginsPage isDarkMode={isDarkMode} navigateTo={navigateTo} />;
+        return <PluginsPage themeMode={themeMode} navigateTo={navigateTo} />;
       case "schedule":
-        return <SchedulePage isDarkMode={isDarkMode} />;
+        return <SchedulePage themeMode={themeMode} />;
       case "timetable":
         return <TimetablePage />;
       case "info":
-        return <StudentInfoPage isDarkMode={isDarkMode} />;
+        return <StudentInfoPage themeMode={themeMode} />;
     }
   };
 
@@ -86,13 +88,10 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* Public routes */}
-          <Route
-            path="/login"
-            element={<LoginPage isDarkMode={isDarkMode} />}
-          />
+          <Route path="/login" element={<LoginPage themeMode={themeMode} />} />
           <Route
             path="/register"
-            element={<RegisterPage isDarkMode={isDarkMode} />}
+            element={<RegisterPage themeMode={themeMode} />}
           />
 
           {/* Protected routes */}
@@ -102,11 +101,15 @@ function App() {
               <ProtectedRoute>
                 <div
                   className={`h-screen flex flex-col ${
-                    isDarkMode ? "bg-gray-900" : "bg-gray-50"
+                    themeMode === "dark"
+                      ? "bg-gray-900 dark"
+                      : themeMode === "cream"
+                      ? "bg-gradient-to-br from-amber-50 to-orange-50 cream"
+                      : "bg-gray-50"
                   }`}
                 >
                   <Header
-                    isDarkMode={isDarkMode}
+                    themeMode={themeMode}
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     historyIndex={historyIndex}
@@ -116,27 +119,20 @@ function App() {
                     isSidebarCollapsed={isSidebarCollapsed}
                     setIsSidebarCollapsed={setIsSidebarCollapsed}
                     navigateTo={navigateTo}
-                    setIsDarkMode={setIsDarkMode}
+                    setThemeMode={setThemeMode}
                   />
 
                   <div className="flex-1 flex overflow-hidden relative">
                     <Sidebar
-                      isDarkMode={isDarkMode}
+                      themeMode={themeMode}
                       currentPage={currentPage}
                       navigateTo={navigateTo}
                       isSidebarCollapsed={isSidebarCollapsed}
-                      onChatbotClick={() => setIsChatbotOpen(!isChatbotOpen)}
                     />
 
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                    <div className="flex-1 overflow-hidden">
                       {renderContent()}
                     </div>
-
-                    <ChatbotPanel
-                      isDarkMode={isDarkMode}
-                      isOpen={isChatbotOpen}
-                      onClose={() => setIsChatbotOpen(false)}
-                    />
                   </div>
                 </div>
               </ProtectedRoute>

@@ -82,6 +82,30 @@ class CogLoader:
                 })
         return result
     
+    def enable_cog(self, cog_name: str) -> bool:
+        """Enable a specific cog"""
+        if cog_name in self.loaded_cogs:
+            try:
+                self.loaded_cogs[cog_name].enable()
+                print(f"✅ Enabled cog: {cog_name}")
+                return True
+            except Exception as e:
+                print(f"❌ Failed to enable {cog_name}: {str(e)}")
+                return False
+        return False
+    
+    def disable_cog(self, cog_name: str) -> bool:
+        """Disable a specific cog"""
+        if cog_name in self.loaded_cogs:
+            try:
+                self.loaded_cogs[cog_name].disable()
+                print(f"⏸️  Disabled cog: {cog_name}")
+                return True
+            except Exception as e:
+                print(f"❌ Failed to disable {cog_name}: {str(e)}")
+                return False
+        return False
+    
     def unload_cog(self, cog_name: str) -> bool:
         """Unload a specific cog"""
         if cog_name in self.loaded_cogs:
