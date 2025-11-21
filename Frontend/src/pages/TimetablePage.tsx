@@ -30,44 +30,51 @@ const TimetablePage: React.FC = () => {
     {
       name: "THỨ HAI",
       shortName: "T2",
-      color: "from-blue-500 to-blue-600",
+      color: "from-blue-600 to-blue-700",
       bgColor: "from-blue-50 to-blue-100",
+      textColor: "text-white",
     },
     {
       name: "THỨ BA",
       shortName: "T3",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "from-blue-50 to-blue-100",
+      color: "from-cyan-600 to-cyan-700",
+      bgColor: "from-cyan-50 to-cyan-100",
+      textColor: "text-white",
     },
     {
       name: "THỨ TƯ",
       shortName: "T4",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "from-blue-50 to-blue-100",
+      color: "from-sky-600 to-sky-700",
+      bgColor: "from-sky-50 to-sky-100",
+      textColor: "text-white",
     },
     {
       name: "THỨ NĂM",
       shortName: "T5",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "from-blue-50 to-blue-100",
+      color: "from-indigo-600 to-indigo-700",
+      bgColor: "from-indigo-50 to-indigo-100",
+      textColor: "text-white",
     },
     {
       name: "THỨ SÁU",
       shortName: "T6",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "from-blue-50 to-blue-100",
+      color: "from-teal-600 to-teal-700",
+      bgColor: "from-teal-50 to-teal-100",
+      textColor: "text-white",
     },
     {
       name: "THỨ BẢY",
       shortName: "T7",
       color: "from-blue-500 to-blue-600",
       bgColor: "from-blue-50 to-blue-100",
+      textColor: "text-white",
     },
     {
       name: "CHỦ NHẬT",
       shortName: "CN",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "from-blue-50 to-blue-100",
+      color: "from-cyan-500 to-cyan-600",
+      bgColor: "from-cyan-50 to-cyan-100",
+      textColor: "text-white",
     },
   ];
 
@@ -144,12 +151,16 @@ const TimetablePage: React.FC = () => {
     );
   };
 
-  // Check if period is first in a session (for rendering course name)
-  const isFirstPeriod = (
-    period: number,
-    session: ProcessedSession
-  ): boolean => {
-    return session.periods[0] === period;
+  // Check if this period should be rendered or is part of a previous session's span
+  const shouldRenderPeriod = (dayIndex: number, period: number): boolean => {
+    const session = getSessionForSlot(dayIndex, period);
+    if (!session) return true; // Empty slot, render it
+    return session.periods[0] === period; // Only render if it's the first period
+  };
+
+  // Get the number of periods a session spans (for rowspan/height calculation)
+  const getSessionSpan = (session: ProcessedSession): number => {
+    return session.periods.length;
   };
 
   const nextDay = () => {
@@ -163,22 +174,22 @@ const TimetablePage: React.FC = () => {
   const currentDay = days[selectedDay];
 
   return (
-    <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-blue-50 p-3 sm:p-6">
+    <div className="h-screen overflow-y-auto bg-gradient-to-br from-blue-50 via-cyan-50 to-sky-50 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <div className="bg-white rounded-3xl shadow-lg p-6 border border-blue-100">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg p-6 border border-blue-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                  <Calendar className="w-5 h-5 text-white" />
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center shadow-md">
+                  <Calendar className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                  <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-700 to-cyan-600 bg-clip-text text-transparent">
                     Thời Khóa Biểu
                   </h1>
                   {selectedTimetable && (
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-sm font-medium text-blue-600 mt-1">
                       Lưu lúc:{" "}
                       {new Date(selectedTimetable.timestamp).toLocaleString(
                         "vi-VN"
@@ -189,27 +200,27 @@ const TimetablePage: React.FC = () => {
               </div>
 
               {/* View Mode Toggle */}
-              <div className="bg-gray-100 rounded-full p-1 flex gap-1 shadow-inner">
+              <div className="bg-blue-100/50 rounded-2xl p-1.5 flex gap-2 shadow-sm border border-blue-200">
                 <button
                   onClick={() => setViewMode("mobile")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-xs transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     viewMode === "mobile"
-                      ? "bg-blue-500 text-white shadow-md"
-                      : "text-gray-600 hover:text-gray-800"
+                      ? "bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-md"
+                      : "text-blue-700 hover:text-blue-900 hover:bg-blue-50"
                   }`}
                 >
-                  <Smartphone className="w-3.5 h-3.5" />
+                  <Smartphone className="w-4 h-4" />
                   <span className="hidden sm:inline">Mobile</span>
                 </button>
                 <button
                   onClick={() => setViewMode("desktop")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-xs transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     viewMode === "desktop"
-                      ? "bg-blue-500 text-white shadow-md"
-                      : "text-gray-600 hover:text-gray-800"
+                      ? "bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-md"
+                      : "text-blue-700 hover:text-blue-900 hover:bg-blue-50"
                   }`}
                 >
-                  <Monitor className="w-3.5 h-3.5" />
+                  <Monitor className="w-4 h-4" />
                   <span className="hidden sm:inline">Desktop</span>
                 </button>
               </div>
@@ -218,19 +229,19 @@ const TimetablePage: React.FC = () => {
             {/* Day Selector - Only show in mobile view */}
             {viewMode === "mobile" && (
               <>
-                <div className="flex items-center justify-between gap-3 mt-4">
+                <div className="flex items-center justify-between gap-4 mt-4">
                   <button
                     onClick={prevDay}
-                    className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-xl transition-all active:scale-95"
+                    className="w-12 h-12 flex items-center justify-center bg-white hover:bg-blue-50 rounded-2xl transition-all active:scale-95 shadow-md border border-blue-200"
                   >
-                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                    <ChevronLeft className="w-5 h-5 text-blue-700" />
                   </button>
 
                   <div
-                    className={`flex-1 bg-gradient-to-br ${currentDay.color} rounded-xl p-3 shadow-sm`}
+                    className={`flex-1 bg-gradient-to-br ${currentDay.color} rounded-2xl p-4 shadow-lg border border-white/30`}
                   >
                     <div className="text-center">
-                      <div className="text-white font-bold text-base tracking-wide drop-shadow-sm">
+                      <div className="text-white font-bold text-xl tracking-wide drop-shadow-md">
                         {currentDay.name}
                       </div>
                     </div>
@@ -238,22 +249,22 @@ const TimetablePage: React.FC = () => {
 
                   <button
                     onClick={nextDay}
-                    className="w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-xl transition-all active:scale-95"
+                    className="w-12 h-12 flex items-center justify-center bg-white hover:bg-blue-50 rounded-2xl transition-all active:scale-95 shadow-md border border-blue-200"
                   >
-                    <ChevronRight className="w-5 h-5 text-gray-700" />
+                    <ChevronRight className="w-5 h-5 text-blue-700" />
                   </button>
                 </div>
 
                 {/* Day Pills */}
-                <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
                   {days.map((day, index) => (
                     <button
                       key={day.shortName}
                       onClick={() => setSelectedDay(index)}
-                      className={`flex-shrink-0 px-3 py-1.5 rounded-full font-semibold text-xs transition-all ${
+                      className={`flex-shrink-0 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                         index === selectedDay
-                          ? `bg-gradient-to-br ${day.color} text-white shadow-sm scale-105`
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? `bg-gradient-to-br ${day.color} text-white shadow-md`
+                          : "bg-white text-blue-700 hover:bg-blue-50 border border-blue-200 shadow-sm"
                       }`}
                     >
                       {day.shortName}
@@ -266,10 +277,10 @@ const TimetablePage: React.FC = () => {
 
           {/* Saved Timetables Selector */}
           {savedTimetables.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-lg p-4 border border-blue-100 mt-4">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-4 border border-blue-200 mt-4">
               <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-4 h-4 text-blue-500" />
-                <h3 className="font-semibold text-gray-800 text-sm">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-blue-900 text-base">
                   Thời khóa biểu đã lưu ({savedTimetables.length})
                 </h3>
               </div>
@@ -277,18 +288,18 @@ const TimetablePage: React.FC = () => {
                 {savedTimetables.map((timetable) => (
                   <div
                     key={timetable.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
                       selectedTimetable?.id === timetable.id
-                        ? "bg-blue-50 border-blue-300 shadow-sm"
-                        : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                        ? "bg-blue-50 border-blue-300 shadow-md"
+                        : "bg-white border-blue-200 hover:bg-blue-50"
                     }`}
                     onClick={() => handleSelectTimetable(timetable)}
                   >
                     <div className="flex-1">
-                      <div className="text-xs font-medium text-gray-800">
+                      <div className="text-sm font-semibold text-blue-900">
                         {new Date(timetable.timestamp).toLocaleString("vi-VN")}
                       </div>
-                      <div className="text-[10px] text-gray-500 mt-0.5">
+                      <div className="text-xs font-medium text-blue-600 mt-1">
                         {timetable.data.scheduled_sessions.length} môn đã xếp •{" "}
                         {timetable.data.unscheduled_sessions.length} môn chưa
                         xếp
@@ -299,9 +310,9 @@ const TimetablePage: React.FC = () => {
                         e.stopPropagation();
                         handleDeleteTimetable(timetable.id);
                       }}
-                      className="ml-2 p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="ml-3 p-2 text-blue-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -312,12 +323,12 @@ const TimetablePage: React.FC = () => {
 
         {/* Empty State */}
         {!selectedTimetable && savedTimetables.length === 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 text-center">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg p-12 border border-blue-200 text-center">
+            <Calendar className="w-20 h-20 text-blue-300 mx-auto mb-6" />
+            <h3 className="text-xl font-semibold text-blue-900 mb-2">
               Chưa có thời khóa biểu
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-base font-medium text-blue-600 mb-4">
               Hãy tạo thời khóa biểu từ trang Chat bằng lệnh /timetable
             </p>
           </div>
@@ -328,33 +339,51 @@ const TimetablePage: React.FC = () => {
           /* Mobile View - Single Column */
           <div className="space-y-2.5 max-w-3xl mx-auto">
             {periods.map((period) => {
+              // Skip rendering if this period is part of a previous session's span
+              if (!shouldRenderPeriod(selectedDay, period)) {
+                return null;
+              }
+
               const time =
                 period <= 5
                   ? morningTimes[period - 1].time
                   : afternoonTimes[period - 6].time;
               const isMorning = period <= 5;
               const session = getSessionForSlot(selectedDay, period);
+              const sessionSpan = session ? getSessionSpan(session) : 1;
+
+              // Calculate dynamic height based on session span (increased base height)
+              const minHeight = 100 * sessionSpan;
+              
+              // Dynamic font size based on course name length
+              const courseName = session?.course_name || "";
+              const getFontSize = (text: string) => {
+                if (sessionSpan >= 3) return "text-lg"; // Large for 3+ periods
+                if (sessionSpan === 2) return "text-base"; // Medium for 2 periods
+                if (text.length > 40) return "text-xs"; // Small for long names
+                if (text.length > 25) return "text-sm"; // Medium-small
+                return "text-base"; // Default medium
+              };
 
               return (
                 <div
                   key={period}
-                  className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md ${
-                    isMorning ? "border-blue-100" : "border-blue-200"
-                  }`}
+                  className="bg-white rounded-2xl shadow-md border-2 border-blue-200 overflow-hidden transition-all hover:shadow-lg hover:border-blue-300"
                 >
                   <div className="flex items-stretch">
                     {/* Time Badge */}
                     <div
-                      className={`w-20 flex-shrink-0 bg-gradient-to-br ${
+                      className={`w-24 flex-shrink-0 bg-gradient-to-br ${
                         isMorning
-                          ? "from-blue-500 to-blue-600"
-                          : "from-blue-600 to-blue-700"
-                      } p-3 flex flex-col items-center justify-center`}
+                          ? "from-blue-600 to-blue-700"
+                          : "from-cyan-600 to-cyan-700"
+                      } p-4 flex flex-col items-center justify-center`}
+                      style={{ minHeight: `${minHeight}px` }}
                     >
-                      <div className="text-white font-bold text-base">
-                        Tiết {period}
+                      <div className="text-white font-bold text-lg tracking-tight drop-shadow-md">
+                        Tiết {period}{sessionSpan > 1 ? `-${period + sessionSpan - 1}` : ''}
                       </div>
-                      <div className="text-white/90 text-xs mt-0.5 font-medium">
+                      <div className="text-white/95 font-medium text-sm mt-1 drop-shadow">
                         {time}
                       </div>
                     </div>
@@ -362,28 +391,27 @@ const TimetablePage: React.FC = () => {
                     {/* Content Area */}
                     {session ? (
                       <div
-                        className={`flex-1 p-3 bg-gradient-to-br ${session.color} min-h-[85px] flex flex-col justify-center`}
+                        className={`flex-1 p-4 bg-gradient-to-br ${session.color} flex flex-col justify-center`}
+                        style={{ minHeight: `${minHeight}px` }}
                       >
-                        {isFirstPeriod(period, session) && (
-                          <>
-                            <div className="text-white font-bold text-sm leading-tight mb-1">
-                              {session.course_name}
-                            </div>
-                            <div className="text-white/90 text-xs">
-                              📍 Phòng {session.classroom}
-                            </div>
-                          </>
-                        )}
+                        <div className={`text-white font-bold ${getFontSize(courseName)} leading-snug mb-2 drop-shadow-md`}>
+                          {session.course_name}
+                        </div>
+                        <div className="text-white/95 font-medium text-sm flex items-center gap-1.5 drop-shadow">
+                          <span className="text-base">📍</span>
+                          <span>Phòng {session.classroom}</span>
+                        </div>
                       </div>
                     ) : (
                       <div
-                        className={`flex-1 p-3 bg-gradient-to-br ${currentDay.bgColor} min-h-[85px] flex items-center justify-center`}
+                        className={`flex-1 p-4 bg-gradient-to-br ${currentDay.bgColor} flex items-center justify-center`}
+                        style={{ minHeight: `${minHeight}px` }}
                       >
-                        <div className="text-center opacity-50">
-                          <div className="w-8 h-8 mx-auto mb-1 rounded-full border border-dashed border-gray-300 flex items-center justify-center">
-                            <span className="text-gray-400 text-sm">•</span>
+                        <div className="text-center opacity-40">
+                          <div className="w-10 h-10 mx-auto mb-2 rounded-full border-2 border-dashed border-blue-300 flex items-center justify-center">
+                            <span className="text-blue-400 text-base">•</span>
                           </div>
-                          <p className="text-gray-400 text-[10px]">Trống</p>
+                          <p className="text-blue-500 text-xs font-medium">Trống</p>
                         </div>
                       </div>
                     )}
@@ -396,29 +424,26 @@ const TimetablePage: React.FC = () => {
 
         {selectedTimetable && viewMode === "desktop" && (
           /* Desktop View - Grid Layout */
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-blue-200">
             {/* Day Headers */}
-            <div className="grid grid-cols-8 gap-px bg-gray-200">
-              <div className="bg-gray-50 p-3 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-gray-400" />
+            <div className="grid grid-cols-8 gap-px bg-blue-200">
+              <div className="bg-blue-50 p-3 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-blue-600" />
               </div>
               {days.map((day) => (
                 <div
                   key={day.name}
-                  className={`bg-gradient-to-br ${day.color} p-3 text-center relative overflow-hidden`}
+                  className={`bg-gradient-to-br ${day.color} p-3 text-center`}
                 >
-                  <div className="relative z-10">
-                    <div className="font-bold text-white text-xs tracking-wide drop-shadow-sm">
-                      {day.shortName}
-                    </div>
+                  <div className="font-semibold text-white text-base tracking-wide drop-shadow-md">
+                    {day.shortName}
                   </div>
-                  <div className="absolute inset-0 bg-white/10"></div>
                 </div>
               ))}
             </div>
 
             {/* Timetable Grid */}
-            <div className="grid grid-cols-8 gap-px bg-gray-200">
+            <div className="grid grid-cols-8 auto-rows-[minmax(70px,auto)] gap-px bg-blue-200">
               {periods.map((period) => {
                 const time =
                   period <= 5
@@ -428,46 +453,82 @@ const TimetablePage: React.FC = () => {
                 return (
                   <React.Fragment key={period}>
                     {/* Period Label */}
-                    <div className="bg-gray-50 p-2.5 flex flex-col items-center justify-center">
-                      <span className="text-xs font-bold text-gray-700">
+                    <div 
+                      className="bg-blue-50 p-3 flex flex-col items-center justify-center"
+                      style={{
+                        gridColumn: 1,
+                        gridRow: period
+                      }}
+                    >
+                      <span className="text-sm font-semibold text-blue-800">
                         Tiết {period}
                       </span>
-                      <span className="text-xs text-gray-500 mt-0.5">
+                      <span className="text-xs font-medium text-blue-600 mt-0.5">
                         {time}
                       </span>
                     </div>
 
                     {/* Time Slots */}
                     {days.map((day, dayIndex) => {
+                      // Skip rendering if this period is part of a previous session's span
+                      if (!shouldRenderPeriod(dayIndex, period)) {
+                        return null;
+                      }
+
                       const session = getSessionForSlot(dayIndex, period);
+                      const sessionSpan = session ? getSessionSpan(session) : 1;
+                      
+                      // Dynamic font sizing based on content and span
+                      const courseName = session?.course_name || "";
+                      const getDesktopFontSize = () => {
+                        if (sessionSpan >= 3) {
+                          // Large blocks
+                          if (courseName.length > 50) return "text-xs";
+                          if (courseName.length > 30) return "text-sm";
+                          return "text-base";
+                        }
+                        if (sessionSpan === 2) {
+                          // Medium blocks
+                          if (courseName.length > 40) return "text-[10px]";
+                          if (courseName.length > 25) return "text-xs";
+                          return "text-sm";
+                        }
+                        // Single blocks
+                        if (courseName.length > 30) return "text-[9px]";
+                        return "text-[10px]";
+                      };
 
                       return (
                         <div
                           key={`${period}-${day.name}`}
-                          className={`p-2 min-h-[60px] transition-all ${
+                          className={`p-2.5 min-h-[70px] transition-all ${
                             session
                               ? ""
                               : "bg-white hover:bg-blue-50 cursor-pointer group"
                           }`}
+                          style={{
+                            gridColumn: dayIndex + 2,
+                            gridRow: `${period} / span ${sessionSpan}`
+                          }}
                         >
                           {session ? (
                             <div
-                              className={`w-full h-full rounded bg-gradient-to-br ${session.color} p-2 flex flex-col justify-center shadow-sm`}
+                              className={`w-full h-full bg-gradient-to-br ${session.color} p-2.5 flex flex-col justify-center rounded-lg`}
                             >
-                              {isFirstPeriod(period, session) && (
-                                <>
-                                  <div className="text-white font-semibold text-[10px] leading-tight mb-0.5">
-                                    {session.course_name}
-                                  </div>
-                                  <div className="text-white/90 text-[9px]">
-                                    {session.classroom}
-                                  </div>
-                                </>
-                              )}
+                              <div className={`text-white font-semibold ${getDesktopFontSize()} leading-tight mb-1 drop-shadow`}>
+                                {session.course_name}
+                              </div>
+                              <div className="text-white/95 font-medium text-[10px] flex items-center gap-0.5 drop-shadow-sm">
+                                <span className="text-xs">📍</span>
+                                <span>{session.classroom}</span>
+                              </div>
+                              <div className="text-white/90 font-medium text-[9px] mt-1 drop-shadow-sm">
+                                Tiết {session.periods[0]}{sessionSpan > 1 ? `-${session.periods[session.periods.length - 1]}` : ''}
+                              </div>
                             </div>
                           ) : (
-                            <div className="w-full h-full rounded border border-dashed border-gray-200 group-hover:border-blue-400 transition-colors flex items-center justify-center">
-                              <span className="text-gray-300 group-hover:text-blue-500 text-xs font-light opacity-50">
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-blue-300 group-hover:text-blue-400 text-sm opacity-40">
                                 •
                               </span>
                             </div>

@@ -89,18 +89,23 @@ function parseTimeSlots(time_slots: string): number[] {
   return [parseInt(cleaned)];
 }
 
-// Generate random pastel colors for courses
+// Cool blue color palette with various shades and tones
 const courseColors = [
-  "from-blue-400 to-blue-500",
-  "from-green-400 to-green-500",
-  "from-purple-400 to-purple-500",
-  "from-pink-400 to-pink-500",
-  "from-indigo-400 to-indigo-500",
-  "from-yellow-400 to-yellow-500",
-  "from-red-400 to-red-500",
-  "from-teal-400 to-teal-500",
-  "from-orange-400 to-orange-500",
-  "from-cyan-400 to-cyan-500",
+  "from-blue-600 to-blue-700",
+  "from-cyan-600 to-cyan-700",
+  "from-sky-600 to-sky-700",
+  "from-indigo-600 to-indigo-700",
+  "from-teal-600 to-teal-700",
+  "from-blue-500 to-blue-600",
+  "from-cyan-500 to-cyan-600",
+  "from-sky-500 to-sky-600",
+  "from-indigo-500 to-indigo-600",
+  "from-teal-500 to-teal-600",
+  "from-blue-700 to-blue-800",
+  "from-cyan-700 to-cyan-800",
+  "from-sky-700 to-sky-800",
+  "from-indigo-700 to-indigo-800",
+  "from-teal-700 to-teal-800",
 ];
 
 let colorIndex = 0;
