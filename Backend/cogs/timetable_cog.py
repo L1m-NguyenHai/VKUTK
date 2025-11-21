@@ -82,7 +82,7 @@ class TimetableCog(BaseCog):
                 )
             ]
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook-test/timetable"
+        self.webhook_url = "https://n8n.group12.cloud/webhook/timetable"
         self.command_history = []
         
     def setup(self):

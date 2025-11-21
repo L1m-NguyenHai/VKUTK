@@ -40,14 +40,31 @@ interface ChatPageProps {
 const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
   const { user } = useAuth();
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      type: "system",
-      content: "Welcome to VKU Toolkit! Type / to see available commands.",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Load messages from localStorage
+    try {
+      const saved = localStorage.getItem("vku_chat_messages");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Convert timestamp strings back to Date objects
+        return parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+      }
+    } catch (e) {
+      console.error("Failed to load chat messages:", e);
+    }
+    // Default welcome message
+    return [
+      {
+        id: "1",
+        type: "system",
+        content: "Welcome to VKU Toolkit! Type / to see available commands.",
+        timestamp: new Date(),
+      },
+    ];
+  });
   const [commands, setCommands] = useState<Command[]>([]);
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState<Command | null>(null);
@@ -75,6 +92,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem("vku_chat_messages", JSON.stringify(messages));
+    } catch (e) {
+      console.error("Failed to save chat messages:", e);
+    }
+  }, [messages]);
 
   // Auto-scroll to bottom
   useEffect(() => {

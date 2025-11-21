@@ -163,7 +163,7 @@ const TimetablePage: React.FC = () => {
   const currentDay = days[selectedDay];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-3 sm:p-6">
+    <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-blue-50 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
