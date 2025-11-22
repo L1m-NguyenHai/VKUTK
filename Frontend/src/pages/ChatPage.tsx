@@ -195,20 +195,53 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       // Get user ID from AuthContext (Supabase UUID)
       const userId = user?.id || "anonymous";
 
-      // Execute command via API
-      const requestBody = {
-        ...commandValues,
-        auth_userid: userId,
-      };
+      let response;
 
-      const response = await fetch(
-        `http://localhost:8000/api/plugins/${selectedCommand.cog_id}/execute`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      // Check if this command has file field (like /summary)
+      const hasFileField = selectedCommand.fields.some((f) => f.type === "file");
+
+      if (hasFileField) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        
+        // Add all command values
+        Object.entries(commandValues).forEach(([key, value]) => {
+          if (value instanceof File) {
+            // It's a file
+            formData.append(key, value);
+          } else {
+            // It's a text field
+            formData.append(key, String(value));
+          }
+        });
+        
+        // Add auth_userid
+        formData.append("auth_userid", userId);
+
+        response = await fetch(
+          `http://localhost:8000/api/plugins/${selectedCommand.cog_id}/execute`,
+          {
+            method: "POST",
+            body: formData,
+            // Don't set Content-Type header - browser will set it automatically with boundary
+          }
+        );
+      } else {
+        // Use JSON for non-file commands
+        const requestBody = {
+          ...commandValues,
+          auth_userid: userId,
+        };
+
+        response = await fetch(
+          `http://localhost:8000/api/plugins/${selectedCommand.cog_id}/execute`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          }
+        );
+      }
 
       let result;
       let errorDetail = null;
@@ -916,6 +949,49 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                           </span>
                         </label>
                       ))}
+                    </div>
+                  ) : field.type === "file" ? (
+                    <div>
+                      <input
+                        type="file"
+                        accept=".pdf,.txt,.docx,.doc,.pptx"
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files && files.length > 0) {
+                            setCommandValues((prev) => ({
+                              ...prev,
+                              [field.name]: files[0],
+                            }));
+                          }
+                        }}
+                        className={`w-full px-2.5 py-1.5 text-xs border rounded-lg
+                                 focus:ring-2 focus:border-transparent ${
+                                   themeMode === "dark"
+                                     ? "border-gray-600 bg-gray-700 text-white focus:ring-blue-500"
+                                     : themeMode === "cream"
+                                     ? "border-[#dcd6c1] bg-[#fdf6e3] text-[#6a777e] focus:ring-[#b3b6ae]"
+                                     : "border-gray-300 bg-white text-gray-900 focus:ring-blue-500"
+                                 }`}
+                      />
+                      {commandValues[field.name] instanceof File && (
+                        <div
+                          className={`mt-1 text-xs p-1.5 rounded flex items-center gap-1 ${
+                            themeMode === "dark"
+                              ? "bg-gray-700 text-green-400"
+                              : themeMode === "cream"
+                              ? "bg-[#dcd6c1] text-green-700"
+                              : "bg-gray-100 text-green-700"
+                          }`}
+                        >
+                          <span>✓</span>
+                          <span className="truncate">
+                            {(commandValues[field.name] as File).name}
+                          </span>
+                          <span className="text-gray-500">
+                            ({Math.round((commandValues[field.name] as File).size / 1024)} KB)
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <input
