@@ -15,8 +15,9 @@ import { SchedulePage } from "./pages/SchedulePage";
 import TimetablePage from "./pages/TimetablePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { QuizResultsPage } from "./pages/QuizResultsPage";
 
-type Page = "chat" | "plugins" | "info" | "schedule" | "timetable";
+type Page = "chat" | "plugins" | "info" | "schedule" | "timetable" | "quiz";
 export type ThemeMode = "dark" | "light" | "cream";
 
 // Protected Route Component
@@ -78,6 +79,8 @@ function App() {
         return <SchedulePage themeMode={themeMode} />;
       case "timetable":
         return <TimetablePage />;
+      case "quiz":
+        return <QuizResultsPage themeMode={themeMode} />;
       case "info":
         return <StudentInfoPage themeMode={themeMode} />;
     }

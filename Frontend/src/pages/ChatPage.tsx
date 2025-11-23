@@ -4,6 +4,8 @@ import { ThemeMode } from "../App";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAuth } from "../contexts/AuthContext";
+import { QuestionsDisplay } from "../components/QuestionsDisplay";
+import { QuizPage } from "./QuizPage";
 
 interface CommandField {
   name: string;
@@ -31,6 +33,7 @@ interface Message {
   timestamp: Date;
   command?: string;
   timetableData?: any; // For timetable responses
+  questionsData?: any; // For questions responses
 }
 
 interface ChatPageProps {
@@ -69,9 +72,11 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState<Command | null>(null);
   const [commandValues, setCommandValues] = useState<
-    Record<string, string | string[] | Record<string, string>>
+    Record<string, string | string[] | Record<string, string> | File>
   >({});
   const [isLoading, setIsLoading] = useState(false);
+  const [quizMode, setQuizMode] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -178,6 +183,17 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       return;
     }
 
+    // Special validation for /questions command
+    if (selectedCommand.command === "questions") {
+      const numQuestions = parseInt(commandValues.num_questions as string) || 0;
+      const numOpenQuestions = parseInt(commandValues.num_open_questions as string) || 0;
+      
+      if (numOpenQuestions > numQuestions) {
+        alert(`Number of open-ended questions (${numOpenQuestions}) cannot exceed total questions (${numQuestions})`);
+        return;
+      }
+    }
+
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -269,6 +285,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       // Add system response
       let responseContent = "";
       let timetableData = null;
+      let questionsData = null;
 
       if (errorDetail) {
         responseContent = `❌ ${errorDetail}`;
@@ -277,8 +294,20 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         if (result.webhook_response) {
           const webhookData = result.webhook_response;
 
-          // Check if this is a timetable response
+          // Check if this is a questions response
           if (
+            webhookData.questions &&
+            Array.isArray(webhookData.questions) &&
+            selectedCommand?.command === "questions"
+          ) {
+            questionsData = webhookData;
+            const totalQuestions = webhookData.total || webhookData.questions.length;
+            const inFileCount = webhookData.in_file_count || 0;
+            const externalCount = webhookData.external_count || 0;
+            responseContent = `✅ Tạo câu hỏi thành công!\n\n📊 Kết quả:\n• Tổng cộng: ${totalQuestions} câu hỏi\n• Từ tài liệu: ${inFileCount} câu\n• Bổ sung: ${externalCount} câu`;
+          }
+          // Check if this is a timetable response
+          else if (
             webhookData.scheduled_sessions &&
             selectedCommand?.command === "timetable"
           ) {
@@ -316,6 +345,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         content: responseContent,
         timestamp: new Date(),
         timetableData: timetableData,
+        questionsData: questionsData,
       };
       setMessages((prev) => [...prev, systemMessage]);
     } catch (error) {
@@ -356,6 +386,27 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
   };
+
+  const handleStartQuiz = (questions: any[]) => {
+    setQuizMode(true);
+    setQuizQuestions(questions);
+  };
+
+  const handleBackToChat = () => {
+    setQuizMode(false);
+    setQuizQuestions([]);
+  };
+
+  // If in quiz mode, show QuizPage instead of chat
+  if (quizMode && quizQuestions.length > 0) {
+    return (
+      <QuizPage
+        themeMode={themeMode}
+        questions={quizQuestions}
+        onBack={handleBackToChat}
+      />
+    );
+  }
 
   return (
     <div
@@ -651,6 +702,19 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                     >
                       💾 Lưu thời khóa biểu này
                     </button>
+                  </div>
+                )}
+
+                {/* Questions Display */}
+                {msg.questionsData && msg.questionsData.questions && (
+                  <div className="mt-3">
+                    <QuestionsDisplay
+                      questions={msg.questionsData.questions}
+                      inFileCount={msg.questionsData.in_file_count || 0}
+                      externalCount={msg.questionsData.external_count || 0}
+                      isDarkMode={themeMode === "dark"}
+                      onStartQuiz={handleStartQuiz}
+                    />
                   </div>
                 )}
               </div>
@@ -996,14 +1060,29 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                   ) : (
                     <input
                       type={field.type}
-                      value={(commandValues[field.name] as string) || ""}
-                      onChange={(e) =>
-                        setCommandValues((prev) => ({
-                          ...prev,
-                          [field.name]: e.target.value,
-                        }))
+                      value={
+                        field.type === "number"
+                          ? (commandValues[field.name] as number | string) || ""
+                          : (commandValues[field.name] as string) || ""
                       }
+                      onChange={(e) => {
+                        if (field.type === "number") {
+                          // Store as string but let validation happen on submit
+                          const value = e.target.value;
+                          setCommandValues((prev) => ({
+                            ...prev,
+                            [field.name]: value,
+                          }));
+                        } else {
+                          setCommandValues((prev) => ({
+                            ...prev,
+                            [field.name]: e.target.value,
+                          }));
+                        }
+                      }}
                       placeholder={field.placeholder}
+                      min={field.type === "number" ? "1" : undefined}
+                      max={field.type === "number" ? "100" : undefined}
                       className={`w-full px-2.5 py-1.5 text-xs border rounded-lg
                                focus:ring-2 focus:border-transparent ${
                                  themeMode === "dark"
