@@ -1,8 +1,8 @@
-import { Grid3x3, User, LogOut, MessageSquare, Calendar } from "lucide-react";
+import { Grid3x3, User, LogOut, MessageSquare, Calendar, Zap } from "lucide-react";
 import type { ThemeMode } from "../App";
 import { useAuth } from "../contexts/AuthContext";
 
-type Page = "chat" | "plugins" | "info" | "schedule" | "timetable";
+type Page = "chat" | "plugins" | "info" | "schedule" | "timetable" | "quiz";
 
 interface SidebarProps {
   themeMode: ThemeMode;
@@ -108,6 +108,26 @@ export function Sidebar({
           >
             <Calendar className="w-4 h-4" />
             <span>Thời khoá biểu</span>
+          </button>
+
+          <button
+            onClick={() => navigateTo("quiz")}
+            className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all text-sm ${
+              currentPage === "quiz"
+                ? themeMode === "dark"
+                  ? "bg-gradient-to-r from-purple-900/50 to-pink-900/50 text-purple-300 font-medium shadow-md"
+                  : themeMode === "cream"
+                  ? "bg-gradient-to-r from-amber-100 to-orange-100 text-orange-700 font-medium shadow-sm border border-orange-200"
+                  : "bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 font-medium shadow-sm"
+                : themeMode === "dark"
+                ? "text-gray-300 hover:bg-gray-700"
+                : themeMode === "cream"
+                ? "text-gray-700 hover:bg-amber-100"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <Zap className="w-4 h-4" />
+            <span>Kết Quả Kiểm Tra</span>
           </button>
         </nav>
 
