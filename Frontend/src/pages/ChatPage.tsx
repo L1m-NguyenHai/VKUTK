@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { useAuth } from "../contexts/AuthContext";
 import { QuestionsDisplay } from "../components/QuestionsDisplay";
 import { QuizPage } from "./QuizPage";
+import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
 
 interface CommandField {
   name: string;
@@ -114,9 +115,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
 
   const fetchCommands = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/plugins/commands"
-      );
+      const response = await fetch(`${getApiEndpoint()}/api/plugins/commands`, {
+        headers: getApiHeaders(),
+      });
       const data = await response.json();
       if (data.success) {
         // Filter commands based on localStorage enabled state
@@ -186,10 +187,13 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
     // Special validation for /questions command
     if (selectedCommand.command === "questions") {
       const numQuestions = parseInt(commandValues.num_questions as string) || 0;
-      const numOpenQuestions = parseInt(commandValues.num_open_questions as string) || 0;
-      
+      const numOpenQuestions =
+        parseInt(commandValues.num_open_questions as string) || 0;
+
       if (numOpenQuestions > numQuestions) {
-        alert(`Number of open-ended questions (${numOpenQuestions}) cannot exceed total questions (${numQuestions})`);
+        alert(
+          `Number of open-ended questions (${numOpenQuestions}) cannot exceed total questions (${numQuestions})`
+        );
         return;
       }
     }
@@ -214,12 +218,14 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       let response;
 
       // Check if this command has file field (like /summary)
-      const hasFileField = selectedCommand.fields.some((f) => f.type === "file");
+      const hasFileField = selectedCommand.fields.some(
+        (f) => f.type === "file"
+      );
 
       if (hasFileField) {
         // Use FormData for file uploads
         const formData = new FormData();
-        
+
         // Add all command values
         Object.entries(commandValues).forEach(([key, value]) => {
           if (value instanceof File) {
@@ -230,14 +236,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
             formData.append(key, String(value));
           }
         });
-        
+
         // Add auth_userid
         formData.append("auth_userid", userId);
 
         response = await fetch(
-          `http://localhost:8000/api/plugins/${selectedCommand.cog_id}/execute`,
+          `${getApiEndpoint()}/api/plugins/${selectedCommand.cog_id}/execute`,
           {
             method: "POST",
+            headers: getApiHeaders(),
             body: formData,
             // Don't set Content-Type header - browser will set it automatically with boundary
           }
@@ -250,10 +257,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         };
 
         response = await fetch(
-          `http://localhost:8000/api/plugins/${selectedCommand.cog_id}/execute`,
+          `${getApiEndpoint()}/api/plugins/${selectedCommand.cog_id}/execute`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...getApiHeaders() },
             body: JSON.stringify(requestBody),
           }
         );
@@ -301,7 +308,8 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
             selectedCommand?.command === "questions"
           ) {
             questionsData = webhookData;
-            const totalQuestions = webhookData.total || webhookData.questions.length;
+            const totalQuestions =
+              webhookData.total || webhookData.questions.length;
             const inFileCount = webhookData.in_file_count || 0;
             const externalCount = webhookData.external_count || 0;
             responseContent = `✅ Tạo câu hỏi thành công!\n\n📊 Kết quả:\n• Tổng cộng: ${totalQuestions} câu hỏi\n• Từ tài liệu: ${inFileCount} câu\n• Bổ sung: ${externalCount} câu`;
@@ -1052,7 +1060,11 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                             {(commandValues[field.name] as File).name}
                           </span>
                           <span className="text-gray-500">
-                            ({Math.round((commandValues[field.name] as File).size / 1024)} KB)
+                            (
+                            {Math.round(
+                              (commandValues[field.name] as File).size / 1024
+                            )}{" "}
+                            KB)
                           </span>
                         </div>
                       )}

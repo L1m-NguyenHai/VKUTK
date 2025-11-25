@@ -10,6 +10,7 @@ import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import ChatPage from "./pages/ChatPage";
 import { PluginsPage } from "./pages/PluginsPage";
+import { PublicPluginsPage } from "./pages/PublicPluginsPage";
 import { StudentInfoPage } from "./pages/StudentInfoPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import TimetablePage from "./pages/TimetablePage";
@@ -95,6 +96,10 @@ function App() {
           <Route
             path="/register"
             element={<RegisterPage themeMode={themeMode} />}
+          />
+          <Route
+            path="/plugins"
+            element={<PublicPluginsPage themeMode={themeMode} />}
           />
 
           {/* Protected routes */}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, X, MessageSquare, Loader, Paperclip } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
 
 interface Message {
   id: string;
@@ -72,7 +73,11 @@ function parseMarkdown(text: string) {
   return parts.length > 0 ? parts : text;
 }
 
-export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps) {
+export function ChatbotPanel({
+  isDarkMode,
+  isOpen,
+  onClose,
+}: ChatbotPanelProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -122,7 +127,10 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
     try {
       // Build FormData for multipart request (supporting binary file upload)
       const formData = new FormData();
-      formData.append("message", inputValue || (selectedFile ? `File: ${selectedFile.name}` : ""));
+      formData.append(
+        "message",
+        inputValue || (selectedFile ? `File: ${selectedFile.name}` : "")
+      );
       formData.append("auth_userid", user?.id || "anonymous");
 
       // Add file if selected (binary upload like Postman)
@@ -131,9 +139,10 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
       }
 
       const response = await fetch(
-        "http://localhost:8000/api/plugins/n8nchatbot/send",
+        `${getApiEndpoint()}/api/plugins/n8nchatbot/send`,
         {
           method: "POST",
+          headers: getApiHeaders(),
           body: formData,
         }
       );
@@ -204,7 +213,7 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
-    
+
     // Show commands if input starts with /
     if (value === "/" || (value.startsWith("/") && !value.includes(" "))) {
       setShowCommands(true);
@@ -222,7 +231,7 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      
+
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -383,7 +392,9 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <div className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 rounded-lg text-sm">
                     <Paperclip className="w-3 h-3" />
-                    <span className="max-w-[150px] truncate">{selectedFile.name}</span>
+                    <span className="max-w-[150px] truncate">
+                      {selectedFile.name}
+                    </span>
                     <button
                       onClick={removeSelectedFile}
                       className="ml-1 hover:text-blue-700 dark:hover:text-blue-300"
@@ -408,12 +419,14 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
                     : "bg-gray-100 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-400"
                 } disabled:opacity-50`}
               />
-              
+
               {/* Slash Commands Suggestions */}
               {showCommands && (
                 <div
                   className={`absolute bottom-full left-0 right-0 mb-2 rounded-lg shadow-lg overflow-hidden z-50 ${
-                    isDarkMode ? "bg-gray-700 border border-gray-600" : "bg-white border border-gray-200"
+                    isDarkMode
+                      ? "bg-gray-700 border border-gray-600"
+                      : "bg-white border border-gray-200"
                   }`}
                 >
                   {SLASH_COMMANDS.map((cmd) => (
@@ -426,7 +439,9 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
                           : "hover:bg-gray-100 text-gray-900"
                       }`}
                     >
-                      <div className="font-mono font-semibold">{cmd.command}</div>
+                      <div className="font-mono font-semibold">
+                        {cmd.command}
+                      </div>
                       <div
                         className={`text-xs ${
                           isDarkMode ? "text-gray-400" : "text-gray-500"
@@ -464,11 +479,11 @@ export function ChatbotPanel({ isDarkMode, isOpen, onClose }: ChatbotPanelProps)
               className="hidden"
               accept="*/*"
             />
-            
+
             {/* Send Message Button */}
             <button
               onClick={sendMessage}
-              disabled={!inputValue.trim() && !selectedFile || isLoading}
+              disabled={(!inputValue.trim() && !selectedFile) || isLoading}
               className={`p-2 rounded-lg transition-all ${
                 (inputValue.trim() || selectedFile) && !isLoading
                   ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"

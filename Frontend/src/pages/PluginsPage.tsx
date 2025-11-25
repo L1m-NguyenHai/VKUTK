@@ -12,6 +12,7 @@ import {
   ExternalLink,
   AlertCircle,
 } from "lucide-react";
+import { getApiEndpoint } from "../utils/apiConfig";
 
 type Page = "plugins" | "info" | "settings" | "schedule";
 
@@ -37,17 +38,13 @@ interface Plugin {
   routes_count: number;
 }
 
-const API_BASE_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : "http://127.0.0.1:8000";
-
 const PLUGIN_ENABLED_KEY = "vku_plugins_enabled";
 
 export function PluginsPage({ themeMode }: PluginsPageProps) {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const API_BASE_URL = getApiEndpoint();
   const [enabledPlugins, setEnabledPlugins] = useState<Record<string, boolean>>(
     () => {
       // Load from localStorage
@@ -60,10 +57,28 @@ export function PluginsPage({ themeMode }: PluginsPageProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/plugins`);
+      const response = await fetch(`${API_BASE_URL}/api/plugins`, {
+        headers: {
+          Accept: "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
+
       if (!response.ok) {
-        throw new Error("Failed to load plugins");
+        throw new Error(
+          `API returned ${response.status}: ${response.statusText}`
+        );
       }
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error(
+          `API returned non-JSON response. Content-Type: ${contentType}`
+        );
+      }
+
       const data = await response.json();
       const loadedPlugins = data.plugins || [];
 
