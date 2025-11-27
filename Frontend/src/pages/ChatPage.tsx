@@ -174,9 +174,18 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
   const handleExecuteCommand = async () => {
     if (!selectedCommand) return;
 
-    // Validate required fields
+    console.log("[DEBUG] handleExecuteCommand called");
+    console.log("[DEBUG] commandValues:", JSON.stringify(commandValues));
+    console.log("[DEBUG] selectedCommand:", selectedCommand.command);
+
+    // Validate required fields - check for empty string, null, undefined, but allow 0
     const missingFields = selectedCommand.fields
-      .filter((f) => f.required && !commandValues[f.name])
+      .filter((f) => {
+        const value = commandValues[f.name];
+        const isEmpty = value === "" || value === null || value === undefined;
+        console.log(`[DEBUG] Field ${f.name}: value=${value}, isEmpty=${isEmpty}, required=${f.required}`);
+        return f.required && isEmpty;
+      })
       .map((f) => f.label);
 
     if (missingFields.length > 0) {
@@ -226,27 +235,45 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         // Use FormData for file uploads
         const formData = new FormData();
 
+        console.log("[DEBUG] Building FormData with commandValues:", commandValues);
+
         // Add all command values
         Object.entries(commandValues).forEach(([key, value]) => {
+          console.log(`[DEBUG] Processing field ${key}:`, value, typeof value);
           if (value instanceof File) {
             // It's a file
+            console.log(`[DEBUG] Appending file ${key}:`, value.name, value.size);
             formData.append(key, value);
-          } else {
-            // It's a text field
+          } else if (value !== "" && value !== null && value !== undefined) {
+            // It's a text field - only add if not empty
+            console.log(`[DEBUG] Appending text ${key}:`, String(value));
             formData.append(key, String(value));
+          } else {
+            console.log(`[DEBUG] Skipping empty field ${key}`);
           }
         });
 
         // Add auth_userid
         formData.append("auth_userid", userId);
 
+        // Debug: Log FormData contents
+        console.log("[DEBUG] FormData entries:");
+        for (const [key, value] of formData.entries()) {
+          console.log(`  ${key}:`, value);
+        }
+
+        // Important: Don't set Content-Type header for FormData - browser sets it automatically with boundary
+        // Only use ngrok-skip-browser-warning header
         response = await fetch(
           `${getApiEndpoint()}/api/plugins/${selectedCommand.cog_id}/execute`,
           {
             method: "POST",
+            headers: {
+              "ngrok-skip-browser-warning": "true",
+              // DO NOT set Content-Type here - browser will set multipart/form-data with boundary
+            },
             headers: getApiHeaders(),
             body: formData,
-            // Don't set Content-Type header - browser will set it automatically with boundary
           }
         );
       } else {

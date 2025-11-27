@@ -161,29 +161,31 @@ class QuestionsCog(BaseCog):
                 )
             
             try:
-                # Validate required fields
-                if not num_questions or not num_questions.strip():
+                # Validate required fields with better error messages
+                print(f"[Questions] Validating fields: num_questions='{num_questions}', relevance='{question_relevance}', open='{num_open_questions}', difficulty='{difficulty_level}'")
+                
+                if not num_questions or (isinstance(num_questions, str) and not num_questions.strip()):
                     raise HTTPException(
                         status_code=400,
-                        detail="num_questions is required"
+                        detail="num_questions is required and cannot be empty"
                     )
                 
-                if not question_relevance or not question_relevance.strip():
+                if not question_relevance or (isinstance(question_relevance, str) and not question_relevance.strip()):
                     raise HTTPException(
                         status_code=400,
-                        detail="question_relevance is required"
+                        detail="question_relevance is required and cannot be empty"
                     )
                 
-                if not num_open_questions or not num_open_questions.strip():
+                if not num_open_questions or (isinstance(num_open_questions, str) and not num_open_questions.strip()):
                     raise HTTPException(
                         status_code=400,
-                        detail="num_open_questions is required"
+                        detail="num_open_questions is required and cannot be empty"
                     )
                 
-                if not difficulty_level or not difficulty_level.strip():
+                if not difficulty_level or (isinstance(difficulty_level, str) and not difficulty_level.strip()):
                     raise HTTPException(
                         status_code=400,
-                        detail="difficulty_level is required"
+                        detail="difficulty_level is required and cannot be empty"
                     )
                 
                 if not file:
