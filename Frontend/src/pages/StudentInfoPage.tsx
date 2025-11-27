@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { ThemeMode } from "../App";
+import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
 
 interface StudentInfoPageProps {
   themeMode: ThemeMode;
@@ -90,11 +91,6 @@ interface SessionStatus {
   size?: number;
 }
 
-const API_BASE_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : "http://127.0.0.1:8000";
-
 export function StudentInfoPage({
   themeMode,
 }: StudentInfoPageProps): JSX.Element {
@@ -115,7 +111,7 @@ export function StudentInfoPage({
   );
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [apiEndpoint, setApiEndpoint] = useState(API_BASE_URL);
+  const [apiEndpoint, setApiEndpoint] = useState(() => getApiEndpoint());
   const [isEditingEndpoint, setIsEditingEndpoint] = useState(false);
   const [showSessionSection, setShowSessionSection] = useState(false);
   const [privacyConsent, setPrivacyConsent] = useState(false);
@@ -140,7 +136,9 @@ export function StudentInfoPage({
   // Check if ready to scrape
   const checkScrapeStatus = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/scrape-status`);
+      const response = await fetch(`${apiEndpoint}/api/scrape-status`, {
+        headers: getApiHeaders(),
+      });
       if (response.ok) {
         const data = await response.json();
         setScrapeReady(data.ready);
@@ -159,6 +157,7 @@ export function StudentInfoPage({
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...getApiHeaders(),
         },
         mode: "cors",
       });
@@ -188,6 +187,7 @@ export function StudentInfoPage({
     try {
       const response = await fetch(`${apiEndpoint}/api/capture-session`, {
         method: "POST",
+        headers: getApiHeaders(),
       });
 
       const data = await response.json();
@@ -223,6 +223,7 @@ export function StudentInfoPage({
     try {
       const response = await fetch(`${apiEndpoint}/api/session`, {
         method: "DELETE",
+        headers: getApiHeaders(),
       });
 
       const data = await response.json();
@@ -277,9 +278,10 @@ export function StudentInfoPage({
 
       const session = JSON.parse(storedSession);
 
-      const response = await fetch(`${API_BASE_URL}/api/students`, {
+      const response = await fetch(`${apiEndpoint}/api/students`, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          ...getApiHeaders(),
         },
       });
 
@@ -326,10 +328,11 @@ export function StudentInfoPage({
       }
       const session = JSON.parse(storedSession);
       const response = await fetch(
-        `${API_BASE_URL}/api/students/${studentId}/grades`,
+        `${apiEndpoint}/api/students/${studentId}/grades`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
+            ...getApiHeaders(),
           },
         }
       );
@@ -357,10 +360,11 @@ export function StudentInfoPage({
       }
       const session = JSON.parse(storedSession);
       const response = await fetch(
-        `${API_BASE_URL}/api/students/${studentId}/tien-do-hoc-tap`,
+        `${apiEndpoint}/api/students/${studentId}/tien-do-hoc-tap`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
+            ...getApiHeaders(),
           },
         }
       );
@@ -440,10 +444,11 @@ export function StudentInfoPage({
       addProgress("scrape", "loading", "🚀 Đang lấy dữ liệu từ VKU Portal...");
       addProgress("scrape-info", "loading", "📋 Đang lấy thông tin cá nhân...");
 
-      const response = await fetch(`${API_BASE_URL}/api/scrape-and-sync`, {
+      const response = await fetch(`${apiEndpoint}/api/scrape-and-sync`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          ...getApiHeaders(),
         },
       });
 

@@ -7,6 +7,7 @@ import {
   Trash2,
   RefreshCw,
 } from "lucide-react";
+import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
 
 interface SessionCapturePageProps {
   isDarkMode: boolean;
@@ -17,12 +18,6 @@ interface SessionStatus {
   path: string;
   size?: number;
 }
-
-// Use localhost in dev mode, 127.0.0.1 in production
-const API_BASE_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : "http://127.0.0.1:8000";
 
 export function SessionCapturePage({ isDarkMode }: SessionCapturePageProps) {
   const [isCapturing, setIsCapturing] = useState(false);
@@ -35,10 +30,10 @@ export function SessionCapturePage({ isDarkMode }: SessionCapturePageProps) {
   );
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [apiEndpoint, setApiEndpoint] = useState(API_BASE_URL);
+  const [apiEndpoint, setApiEndpoint] = useState(() => getApiEndpoint());
   const [isEditingEndpoint, setIsEditingEndpoint] = useState(false);
 
-  console.log("SessionCapturePage mounted, API_BASE_URL:", API_BASE_URL);
+  console.log("SessionCapturePage mounted, API endpoint:", apiEndpoint);
 
   const checkSession = async () => {
     console.log("checkSession called");
@@ -51,6 +46,7 @@ export function SessionCapturePage({ isDarkMode }: SessionCapturePageProps) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...getApiHeaders(),
         },
         mode: "cors",
       });
@@ -95,6 +91,7 @@ export function SessionCapturePage({ isDarkMode }: SessionCapturePageProps) {
     try {
       const response = await fetch(`${apiEndpoint}/api/capture-session`, {
         method: "POST",
+        headers: getApiHeaders(),
       });
 
       const data = await response.json();
@@ -131,6 +128,7 @@ export function SessionCapturePage({ isDarkMode }: SessionCapturePageProps) {
     try {
       const response = await fetch(`${apiEndpoint}/api/session`, {
         method: "DELETE",
+        headers: getApiHeaders(),
       });
 
       const data = await response.json();

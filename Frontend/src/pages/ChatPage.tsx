@@ -272,6 +272,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
               "ngrok-skip-browser-warning": "true",
               // DO NOT set Content-Type here - browser will set multipart/form-data with boundary
             },
+            headers: getApiHeaders(),
             body: formData,
           }
         );

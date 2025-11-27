@@ -5,6 +5,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
 
 interface User {
   id: string;
@@ -37,10 +38,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : "http://127.0.0.1:8000";
+// Use dynamic API endpoint from apiConfig
+const getApiBaseUrl = () => getApiEndpoint();
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -69,7 +68,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } else {
             // Get user info
             const response = await fetch(
-              `${API_BASE_URL}/api/auth/user?access_token=${parsedSession.access_token}`
+              `${getApiBaseUrl()}/api/auth/user?access_token=${
+                parsedSession.access_token
+              }`,
+              { headers: getApiHeaders() }
             );
             if (response.ok) {
               const data = await response.json();
@@ -94,9 +96,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshSessionInternal = async (refreshToken: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getApiHeaders() },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
 
@@ -119,9 +121,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
+      console.log("[AuthContext] Signing in to:", getApiBaseUrl());
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/signin`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getApiHeaders() },
         body: JSON.stringify({ email, password }),
       });
 
@@ -146,9 +149,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     metadata?: Record<string, any>
   ) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/signup`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...getApiHeaders() },
         body: JSON.stringify({ email, password, metadata }),
       });
 
@@ -175,9 +178,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (session?.access_token) {
         await fetch(
-          `${API_BASE_URL}/api/auth/signout?access_token=${session.access_token}`,
+          `${getApiBaseUrl()}/api/auth/signout?access_token=${
+            session.access_token
+          }`,
           {
             method: "POST",
+            headers: getApiHeaders(),
           }
         );
       }
