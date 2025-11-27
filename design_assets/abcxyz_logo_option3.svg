@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad_abc3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#11998e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38ef7d;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="512" height="512" rx="120" fill="#F3F4F6"/>
+  
+  <!-- Playful overlapping circles/shapes -->
+  <circle cx="200" cy="200" r="80" fill="url(#grad_abc3)" opacity="0.8"/>
+  <circle cx="312" cy="200" r="80" fill="#111827" opacity="0.8"/>
+  <circle cx="256" cy="300" r="80" fill="#6B7280" opacity="0.8"/>
+  
+  <!-- Text Overlay -->
+  <text x="50%" y="52%" text-anchor="middle" dy=".3em" font-family="Verdana, sans-serif" font-weight="bold" font-size="80" fill="white" stroke="#111827" stroke-width="2">abcxyz</text>
+</svg>

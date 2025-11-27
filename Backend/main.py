@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -46,6 +46,67 @@ app = FastAPI(
     lifespan=lifespan,
     swagger_ui_parameters={"persistAuthorization": True}
 )
+
+
+# Request logging middleware - logs method and path for every incoming request
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    try:
+        print(f"[Request] {request.method} {request.url.path}")
+    except Exception:
+        pass
+    try:
+        response = await call_next(request)
+        return response
+    except Exception as e:
+        import traceback
+        print(f"[Request] Exception while handling {request.method} {request.url.path}: {e}")
+        traceback.print_exc()
+        # Re-raise so FastAPI/Starlette can still handle the exception
+        raise
+
+
+# Debug routes to help trace incoming requests and ensure that plugins are loaded
+@app.get("/api/debug/routes")
+async def debug_routes():
+    routes = []
+    for r in app.routes:
+        try:
+            routes.append({
+                "path": r.path,
+                "name": getattr(r, 'name', None),
+                "methods": list(getattr(r, 'methods', []))
+            })
+        except Exception:
+            pass
+    return {"routes": routes}
+
+
+@app.post("/api/debug/echo")
+async def debug_echo(request: Request):
+    try:
+        content_type = request.headers.get('content-type', '')
+        body = None
+        if 'application/json' in content_type:
+            try:
+                body = await request.json()
+            except Exception:
+                body = await request.body()
+        else:
+            try:
+                form = await request.form()
+                body = {k: str(v) for k, v in form.items()}
+            except Exception:
+                body = await request.body()
+        return {
+            "method": request.method,
+            "path": request.url.path,
+            "headers": dict(request.headers),
+            "content_type": content_type,
+            "body": body
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 # Add security scheme to OpenAPI schema
 from fastapi.openapi.utils import get_openapi

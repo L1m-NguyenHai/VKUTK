@@ -5,7 +5,7 @@ This cog provides chat functionality that sends messages to n8n webhook for AI p
 Supports conversational interactions with context awareness.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form, UploadFile, File, Request
 from pydantic import BaseModel
 from typing import Optional, List, Dict
 import httpx
@@ -54,23 +54,9 @@ class ChatCog(BaseCog):
             author="VKU Toolkit Team",
             icon="MessageCircle",
             color="from-blue-500 to-cyan-500",
-            commands=[
-                CommandDefinition(
-                    command="chat",
-                    description="Send a message to AI chatbot",
-                    fields=[
-                        CommandField(
-                            name="message",
-                            label="Your Message",
-                            type="textarea",
-                            placeholder="Type your question or message here...",
-                            required=True
-                        )
-                    ]
-                )
-            ]
+            commands=[]  # No slash commands - direct chat only
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook-test/chat"
+        self.webhook_url = "https://n8n.group12.cloud/webhook/chat"
         self.chat_history: List[Dict] = []
         
     def setup(self):
@@ -86,7 +72,8 @@ class ChatCog(BaseCog):
                 "webhook_url": self.webhook_url,
                 "commands": [cmd.model_dump() for cmd in self.metadata.commands],
                 "endpoints": {
-                    "execute": "POST /execute - Send message to chatbot",
+                    "send": "POST /send - Direct chat (main endpoint)",
+                    "execute": "POST /execute - Legacy command endpoint",
                     "history": "GET /history - Get chat history",
                     "clear": "POST /clear - Clear chat history",
                     "test": "POST /test - Test webhook connectivity"
@@ -97,11 +84,12 @@ class ChatCog(BaseCog):
                     "history": "Stores recent chat interactions"
                 },
                 "usage": {
-                    "command": "/chat",
+                    "endpoint": "/send",
+                    "method": "POST (multipart/form-data)",
                     "example": {
                         "message": "What is VKU?",
                         "auth_userid": "optional_user_id",
-                        "conversation_id": "optional_conversation_id"
+                        "file": "optional_file_attachment"
                     }
                 },
                 "total_messages": len(self.chat_history)
@@ -200,7 +188,9 @@ class ChatCog(BaseCog):
                             ai_response = str(webhook_response)
                         
                     except Exception as parse_error:
+                        import traceback
                         print(f"[Chat] Error parsing webhook response: {str(parse_error)}")
+                        traceback.print_exc()
                         webhook_response = {"text": response.text[:500]}
                         ai_response = response.text[:500]
                     
@@ -238,7 +228,9 @@ class ChatCog(BaseCog):
             except HTTPException:
                 raise
             except Exception as e:
+                import traceback
                 print(f"[Chat] Error: {str(e)}")
+                traceback.print_exc()
                 raise HTTPException(
                     status_code=500,
                     detail=f"Failed to process chat message: {str(e)}"
@@ -370,6 +362,184 @@ class ChatCog(BaseCog):
                 raise HTTPException(
                     status_code=500,
                     detail=f"Test failed: {str(e)}"
+                )
+
+        @self.router.post("/send")
+        async def send_message(
+            request: Request,
+            message: Optional[str] = Form(None),
+            auth_userid: str = Form("anonymous"),
+            conversation_id: Optional[str] = Form(None),
+            file: Optional[UploadFile] = File(None)
+        ):
+            """
+            Direct chat endpoint - Send message without /chat command
+            This is the main endpoint for the chatbot panel in Frontend.
+            Supports multipart/form-data for file uploads.
+            
+            Form fields:
+            - message: User message (REQUIRED)
+            - auth_userid: User identifier (Optional, default: "anonymous")
+            - file: Optional file attachment
+            
+            Returns:
+            - success: Whether message was processed successfully
+            - message: AI response text (for easy Frontend parsing)
+            - response: AI chatbot response (alias)
+            - webhook_response: Full response from n8n webhook
+            """
+            try:
+                # Log request headers and whether this arrived as form or JSON
+                ct = request.headers.get("content-type", "")
+                print(f"[Chat] Request content-type: {ct}")
+                if "application/json" in ct:
+                    try:
+                        json_body = await request.json()
+                        print(f"[Chat] JSON body: {json_body}")
+                        # Overwrite fields with JSON values if provided
+                        message = json_body.get("message", message)
+                        auth_userid = json_body.get("auth_userid", auth_userid)
+                        # Support conversation_id if present in JSON
+                        if "conversation_id" in json_body:
+                            conversation_id = json_body.get("conversation_id")
+                    except Exception as e:
+                        print(f"[Chat] Failed to parse JSON body: {e}")
+                else:
+                    try:
+                        form = await request.form()
+                        form_keys = list(form.keys())
+                        print(f"[Chat] Form keys: {form_keys}")
+                    except Exception as e:
+                        print(f"[Chat] Failed to read form data: {e}")
+            except Exception:
+                pass
+
+            # Print direct send summary after JSON/form parsing so message may be available
+            try:
+                mstr = message if message is not None else "(none)"
+                if isinstance(mstr, str) and len(mstr) > 50:
+                    summary = mstr[:50]
+                else:
+                    summary = mstr
+                print(f"[Chat] Direct send: message='{summary}', user={auth_userid}, file={file.filename if file else 'None'}")
+            except Exception:
+                pass
+            except Exception:
+                pass
+            
+            if not self.is_enabled():
+                raise HTTPException(
+                    status_code=403,
+                    detail="Chat cog is currently disabled"
+                )
+            
+            try:
+                if not message or not message.strip():
+                    raise HTTPException(
+                        status_code=400,
+                        detail="message is required and cannot be empty"
+                    )
+                
+                # Prepare payload for webhook
+                payload = {
+                    "message": message.strip(),
+                    "auth_userid": auth_userid,
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "VKU Toolkit - Chat"
+                }
+                
+                # Handle file if provided
+                file_content = None
+                if file:
+                    file_content = await file.read()
+                    payload["file_name"] = file.filename
+                    payload["file_size"] = len(file_content)
+                    payload["file_type"] = file.content_type
+                
+                print(f"[Chat] Sending to webhook: {self.webhook_url}")
+                
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    # If file is attached, send as multipart, otherwise JSON
+                    if file_content:
+                        files = {"file": (file.filename, file_content, file.content_type)}
+                        response = await client.post(
+                            self.webhook_url,
+                            data=payload,
+                            files=files
+                        )
+                    else:
+                        response = await client.post(
+                            self.webhook_url,
+                            json=payload
+                        )
+                    
+                    print(f"[Chat] Webhook response status: {response.status_code}")
+                    
+                    webhook_response = None
+                    ai_response = None
+                    
+                    try:
+                        response_data = response.json()
+                        if isinstance(response_data, list) and len(response_data) > 0:
+                            webhook_response = response_data[0]
+                        elif isinstance(response_data, dict):
+                            webhook_response = response_data
+                        else:
+                            webhook_response = {"text": str(response_data)}
+                        
+                        if isinstance(webhook_response, dict):
+                            ai_response = (
+                                webhook_response.get("response") or
+                                webhook_response.get("message") or
+                                webhook_response.get("reply") or
+                                webhook_response.get("text") or
+                                webhook_response.get("output")
+                            )
+                        
+                        if not ai_response:
+                            ai_response = str(webhook_response)
+                        
+                    except Exception as parse_error:
+                        print(f"[Chat] Error parsing webhook response: {str(parse_error)}")
+                        webhook_response = {"text": response.text[:500]}
+                        ai_response = response.text[:500]
+                    
+                    print(f"[Chat] AI response: {ai_response[:100] if ai_response else 'None'}...")
+                    
+                    # Log to history
+                    self.chat_history.append({
+                        "timestamp": datetime.now().isoformat(),
+                        "auth_userid": auth_userid,
+                        "user_message": message,
+                        "ai_response": ai_response,
+                        "has_file": file is not None,
+                        "status_code": response.status_code,
+                        "success": response.status_code == 200
+                    })
+                    
+                    if len(self.chat_history) > 100:
+                        self.chat_history = self.chat_history[-100:]
+                    
+                    if response.status_code == 200:
+                        return {
+                            "success": True,
+                            "message": ai_response,  # AI response in message field for easy parsing
+                            "response": ai_response,
+                            "webhook_response": webhook_response
+                        }
+                    else:
+                        raise HTTPException(
+                            status_code=response.status_code,
+                            detail=f"Webhook returned error: {response.text[:200]}"
+                        )
+                    
+            except HTTPException:
+                raise
+            except Exception as e:
+                print(f"[Chat] Error: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to process chat message: {str(e)}"
                 )
 
 

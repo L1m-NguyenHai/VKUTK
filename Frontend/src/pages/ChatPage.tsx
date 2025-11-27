@@ -76,6 +76,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
     Record<string, string | string[] | Record<string, string> | File>
   >({});
   const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [quizMode, setQuizMode] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -183,7 +184,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       .filter((f) => {
         const value = commandValues[f.name];
         const isEmpty = value === "" || value === null || value === undefined;
-        console.log(`[DEBUG] Field ${f.name}: value=${value}, isEmpty=${isEmpty}, required=${f.required}`);
+        console.log(
+          `[DEBUG] Field ${f.name}: value=${value}, isEmpty=${isEmpty}, required=${f.required}`
+        );
         return f.required && isEmpty;
       })
       .map((f) => f.label);
@@ -235,14 +238,21 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         // Use FormData for file uploads
         const formData = new FormData();
 
-        console.log("[DEBUG] Building FormData with commandValues:", commandValues);
+        console.log(
+          "[DEBUG] Building FormData with commandValues:",
+          commandValues
+        );
 
         // Add all command values
         Object.entries(commandValues).forEach(([key, value]) => {
           console.log(`[DEBUG] Processing field ${key}:`, value, typeof value);
           if (value instanceof File) {
             // It's a file
-            console.log(`[DEBUG] Appending file ${key}:`, value.name, value.size);
+            console.log(
+              `[DEBUG] Appending file ${key}:`,
+              value.name,
+              value.size
+            );
             formData.append(key, value);
           } else if (value !== "" && value !== null && value !== undefined) {
             // It's a text field - only add if not empty
@@ -269,10 +279,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
           {
             method: "POST",
             headers: {
+              Accept: "application/json",
               "ngrok-skip-browser-warning": "true",
-              // DO NOT set Content-Type here - browser will set multipart/form-data with boundary
             },
-            headers: getApiHeaders(),
             body: formData,
           }
         );
@@ -403,7 +412,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
     setCommandValues({});
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     if (selectedCommand) {
@@ -412,14 +421,89 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
     }
 
     // Regular message
+    const messageText = input.trim();
     const newMessage: Message = {
       id: Date.now().toString(),
       type: "user",
-      content: input,
+      content: messageText,
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
+
+    // Send to backend chat endpoint
+    try {
+      setIsLoading(true);
+      const payload = {
+        message: messageText,
+        auth_userid: user?.id || "anonymous",
+      } as any;
+
+      console.log("[ChatPage] Sending plain chat to backend:", payload);
+
+      const response = await fetch(
+        `${getApiEndpoint()}/api/plugins/chat/send`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...getApiHeaders() },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        const text = await response.text();
+        data = { success: false, message: text || "Unknown error" } as any;
+      }
+
+      console.log("[ChatPage] Response from chat API:", response.status, data);
+
+      if (!response.ok) {
+        const err = data.detail || data.message || `HTTP ${response.status}`;
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "system",
+          content: `❌ ${err}`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        setServerError(String(err));
+        // auto clear after 6s
+        setTimeout(() => setServerError(null), 6000);
+      } else {
+        // Display AI response in chat
+        const botText =
+          data.message ||
+          data.response ||
+          data.webhook_response?.text ||
+          (typeof data.webhook_response === "string"
+            ? data.webhook_response
+            : undefined) ||
+          "(No reply)";
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: "system",
+          content: botText,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+      }
+    } catch (error) {
+      console.error("[ChatPage] Error sending plain chat:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "system",
+        content: "Error: Unable to reach the chat service.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setServerError(String(error));
+      setTimeout(() => setServerError(null), 6000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleStartQuiz = (questions: any[]) => {
@@ -463,6 +547,22 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
             : "border-gray-200 bg-white"
         }`}
       >
+        {/* Server error toast */}
+        {serverError && (
+          <div className="fixed top-4 right-4 z-50">
+            <div className="bg-red-600 text-white px-4 py-2 rounded shadow">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 text-sm">{serverError}</div>
+                <button
+                  onClick={() => setServerError(null)}
+                  className="text-white opacity-80 hover:opacity-100"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <h1
           className={`text-base font-semibold ${
             themeMode === "dark"

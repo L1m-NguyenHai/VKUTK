@@ -5,7 +5,7 @@ This cog provides the /questions command to generate exam questions based on upl
 Sends file and parameters to n8n webhook for processing.
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from pydantic import BaseModel
 from typing import Optional
 import httpx
@@ -126,6 +126,7 @@ class QuestionsCog(BaseCog):
         
         @self.router.post("/execute", response_model=QuestionsResponse)
         async def execute_command(
+            request: Request,
             num_questions: str = Form(default=""),
             question_relevance: str = Form(default=""),
             num_open_questions: str = Form(default=""),
@@ -150,6 +151,22 @@ class QuestionsCog(BaseCog):
             - webhook_response: Response from n8n webhook
             """
             print(f"[Questions] Received execute request: filename={file.filename if file else 'None'}, user={auth_userid}")
+            try:
+                # Log form keys and headers for debugging when FormData is used
+                form_keys = []
+                if request.headers:
+                    print(f"[Questions] Request headers: {dict(request.headers)}")
+                # Try to access the form if available (may raise if not multipart)
+                try:
+                    form = await request.form()
+                    for key in form.keys():
+                        form_keys.append(key)
+                    print(f"[Questions] Received form keys: {form_keys}")
+                except Exception:
+                    print("[Questions] No form data or failed to parse form data")
+            except Exception as _:
+                # Don't block execution on logging failures
+                pass
             print(f"[Questions] Parameters: num_questions={num_questions}, relevance={question_relevance}, open={num_open_questions}, difficulty={difficulty_level}")
             print(f"[Questions] Raw parameter values: {repr(num_questions)}, {repr(num_open_questions)}")
             
@@ -163,30 +180,39 @@ class QuestionsCog(BaseCog):
             try:
                 # Validate required fields with better error messages
                 print(f"[Questions] Validating fields: num_questions='{num_questions}', relevance='{question_relevance}', open='{num_open_questions}', difficulty='{difficulty_level}'")
-                
+                # If the incoming request used JSON (Content-Type: application/json), extract values from JSON body
+                try:
+                    ct = request.headers.get("content-type", "")
+                    if "application/json" in ct:
+                        print("[Questions] Request sent as JSON - trying to parse JSON payload")
+                        try:
+                            json_payload = await request.json()
+                            print(f"[Questions] Parsed JSON payload: {json_payload}")
+                            num_questions = json_payload.get("num_questions", num_questions)
+                            question_relevance = json_payload.get("question_relevance", question_relevance)
+                            num_open_questions = json_payload.get("num_open_questions", num_open_questions)
+                            difficulty_level = json_payload.get("difficulty_level", difficulty_level)
+                        except Exception as e:
+                            print(f"[Questions] Failed to parse JSON payload: {str(e)}")
+                except Exception:
+                    pass
+                # If any required field is missing, provide defaults instead of failing
+                # Defaults: num_questions=10, question_relevance='High', num_open_questions=0, difficulty_level='Medium'
                 if not num_questions or (isinstance(num_questions, str) and not num_questions.strip()):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="num_questions is required and cannot be empty"
-                    )
+                    print("[Questions] num_questions missing or empty - defaulting to 10")
+                    num_questions = "10"
                 
                 if not question_relevance or (isinstance(question_relevance, str) and not question_relevance.strip()):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="question_relevance is required and cannot be empty"
-                    )
+                    print("[Questions] question_relevance missing or empty - defaulting to 'High'")
+                    question_relevance = "High"
                 
                 if not num_open_questions or (isinstance(num_open_questions, str) and not num_open_questions.strip()):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="num_open_questions is required and cannot be empty"
-                    )
+                    print("[Questions] num_open_questions missing or empty - defaulting to 0")
+                    num_open_questions = "0"
                 
                 if not difficulty_level or (isinstance(difficulty_level, str) and not difficulty_level.strip()):
-                    raise HTTPException(
-                        status_code=400,
-                        detail="difficulty_level is required and cannot be empty"
-                    )
+                    print("[Questions] difficulty_level missing or empty - defaulting to 'Medium'")
+                    difficulty_level = "Medium"
                 
                 if not file:
                     raise HTTPException(

@@ -53,6 +53,13 @@ class CogLoader:
                     metadata = getattr(cog_instance, "metadata", None)
                     if metadata:
                         print(f"  ✅ Loaded: {metadata.name} v{metadata.version} by {metadata.author}")
+                    # Print route paths registered in cog for easy debugging
+                    try:
+                        routes = [route.path for route in cog_instance.router.routes]
+                        if routes:
+                            print(f"     Routes: {routes}")
+                    except Exception:
+                        pass
                     else:
                         print(f"  ✅ Loaded: {cog_name}")
                     

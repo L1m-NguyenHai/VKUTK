@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, X, MessageSquare, Loader, Paperclip } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
+import { getApiEndpoint } from "../utils/apiConfig";
 
 interface Message {
   id: string;
@@ -82,6 +82,7 @@ export function ChatbotPanel({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const [showCommands, setShowCommands] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -127,10 +128,7 @@ export function ChatbotPanel({
     try {
       // Build FormData for multipart request (supporting binary file upload)
       const formData = new FormData();
-      formData.append(
-        "message",
-        inputValue || (selectedFile ? `File: ${selectedFile.name}` : "")
-      );
+      formData.append("message", displayText);
       formData.append("auth_userid", user?.id || "anonymous");
 
       // Add file if selected (binary upload like Postman)
@@ -138,16 +136,30 @@ export function ChatbotPanel({
         formData.append("file", selectedFile);
       }
 
+      // Don't set Content-Type header for FormData - browser will auto-set with boundary
       const response = await fetch(
-        `${getApiEndpoint()}/api/plugins/n8nchatbot/send`,
+        `${getApiEndpoint()}/api/plugins/chat/send`,
         {
           method: "POST",
-          headers: getApiHeaders(),
+          headers: {
+            Accept: "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
           body: formData,
         }
       );
 
-      const data = await response.json();
+      console.log("[ChatbotPanel] Chat send response status:", response.status);
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        const text = await response.text();
+        console.error("[ChatbotPanel] Failed to parse JSON response:", e, text);
+        data = { success: false, message: text || "Unknown error" };
+      }
+      console.log("[ChatbotPanel] Chat send response payload:", data);
 
       // Parse bot response - extract clean message text
       let botResponse = "Sorry, I couldn't understand that.";
@@ -198,6 +210,8 @@ export function ChatbotPanel({
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
+      setToast("Error: Unable to connect to the chatbot.");
+      setTimeout(() => setToast(null), 6000);
     } finally {
       setIsLoading(false);
     }
@@ -497,6 +511,17 @@ export function ChatbotPanel({
           </div>
         </div>
       </div>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-24 right-6 z-50">
+          <div className="bg-red-600 text-white px-3 py-2 rounded shadow-md flex items-center gap-2">
+            <div className="text-sm">{toast}</div>
+            <button onClick={() => setToast(null)} className="text-white">
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
