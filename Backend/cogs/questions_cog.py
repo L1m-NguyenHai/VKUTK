@@ -83,7 +83,7 @@ class QuestionsCog(BaseCog):
                 )
             ]
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook/questions"
+        self.webhook_url = "https://n8n.group12.cloud/webhook-test/questions"
         self.command_history = []
         
     def setup(self):
@@ -288,40 +288,75 @@ class QuestionsCog(BaseCog):
                     webhook_response = None
                     try:
                         response_data = response.json()
-                        # Handle both array and dict responses from n8n
-                        if isinstance(response_data, list) and len(response_data) > 0:
-                            webhook_response = response_data[0]
-                        elif isinstance(response_data, dict):
-                            webhook_response = response_data
-                        else:
-                            webhook_response = {"text": str(response_data)}
+                        print(f"[Questions] Raw response type: {type(response_data)}")
                         
-                        # Parse questions output structure
-                        if isinstance(webhook_response, dict) and "output" in webhook_response:
-                            output = webhook_response.get("output", {})
-                            # Flatten the questions structure for easier consumption
-                            if isinstance(output, dict):
-                                questions_list = []
-                                # Collect in_file_questions
-                                if "in_file_questions" in output:
-                                    for q in output["in_file_questions"]:
+                        # Handle new response format: { "in_file_questions": [...], "external_questions": [...] }
+                        if isinstance(response_data, dict):
+                            questions_list = []
+                            in_file_count = 0
+                            external_count = 0
+                            
+                            # Check if response_data has the questions directly
+                            if "in_file_questions" in response_data:
+                                # Direct format from n8n
+                                if "in_file_questions" in response_data:
+                                    for q in response_data["in_file_questions"]:
                                         q["type"] = "in_file"
                                         questions_list.append(q)
-                                # Collect external_questions
-                                if "external_questions" in output:
-                                    for q in output["external_questions"]:
+                                    in_file_count = len(response_data["in_file_questions"])
+                                
+                                if "external_questions" in response_data:
+                                    for q in response_data["external_questions"]:
                                         q["type"] = "external"
                                         questions_list.append(q)
+                                    external_count = len(response_data["external_questions"])
+                                
+                                webhook_response = {
+                                    "questions": questions_list,
+                                    "total": len(questions_list),
+                                    "in_file_count": in_file_count,
+                                    "external_count": external_count
+                                }
+                            else:
+                                # Fallback: keep original response
+                                webhook_response = response_data
+                        elif isinstance(response_data, list) and len(response_data) > 0:
+                            # Handle array response (old format or wrapped)
+                            first_item = response_data[0]
+                            if isinstance(first_item, dict):
+                                questions_list = []
+                                in_file_count = 0
+                                external_count = 0
+                                
+                                if "in_file_questions" in first_item:
+                                    for q in first_item["in_file_questions"]:
+                                        q["type"] = "in_file"
+                                        questions_list.append(q)
+                                    in_file_count = len(first_item["in_file_questions"])
+                                
+                                if "external_questions" in first_item:
+                                    for q in first_item["external_questions"]:
+                                        q["type"] = "external"
+                                        questions_list.append(q)
+                                    external_count = len(first_item["external_questions"])
                                 
                                 if questions_list:
                                     webhook_response = {
                                         "questions": questions_list,
                                         "total": len(questions_list),
-                                        "in_file_count": len(output.get("in_file_questions", [])),
-                                        "external_count": len(output.get("external_questions", []))
+                                        "in_file_count": in_file_count,
+                                        "external_count": external_count
                                     }
+                                else:
+                                    webhook_response = first_item
+                            else:
+                                webhook_response = response_data[0]
+                        else:
+                            webhook_response = {"text": str(response_data)}
                     except Exception as parse_error:
                         print(f"[Questions] Error parsing webhook response: {str(parse_error)}")
+                        import traceback
+                        print(f"[Questions] Parse error traceback:\n{traceback.format_exc()}")
                         webhook_response = {"text": response.text[:200]}
                     
                     print(f"[Questions] Parsed webhook_response: {webhook_response}")
@@ -470,39 +505,74 @@ startxref
                     webhook_response = None
                     try:
                         response_data = response.json()
-                        if isinstance(response_data, list) and len(response_data) > 0:
-                            webhook_response = response_data[0]
-                        elif isinstance(response_data, dict):
-                            webhook_response = response_data
-                        else:
-                            webhook_response = {"text": str(response_data)}
                         
-                        # Parse questions output structure
-                        if isinstance(webhook_response, dict) and "output" in webhook_response:
-                            output = webhook_response.get("output", {})
-                            # Flatten the questions structure for easier consumption
-                            if isinstance(output, dict):
-                                questions_list = []
-                                # Collect in_file_questions
-                                if "in_file_questions" in output:
-                                    for q in output["in_file_questions"]:
+                        # Handle new response format: { "in_file_questions": [...], "external_questions": [...] }
+                        if isinstance(response_data, dict):
+                            questions_list = []
+                            in_file_count = 0
+                            external_count = 0
+                            
+                            # Check if response_data has the questions directly
+                            if "in_file_questions" in response_data:
+                                # Direct format from n8n
+                                if "in_file_questions" in response_data:
+                                    for q in response_data["in_file_questions"]:
                                         q["type"] = "in_file"
                                         questions_list.append(q)
-                                # Collect external_questions
-                                if "external_questions" in output:
-                                    for q in output["external_questions"]:
+                                    in_file_count = len(response_data["in_file_questions"])
+                                
+                                if "external_questions" in response_data:
+                                    for q in response_data["external_questions"]:
                                         q["type"] = "external"
                                         questions_list.append(q)
+                                    external_count = len(response_data["external_questions"])
+                                
+                                webhook_response = {
+                                    "questions": questions_list,
+                                    "total": len(questions_list),
+                                    "in_file_count": in_file_count,
+                                    "external_count": external_count
+                                }
+                            else:
+                                # Fallback: keep original response
+                                webhook_response = response_data
+                        elif isinstance(response_data, list) and len(response_data) > 0:
+                            # Handle array response (old format or wrapped)
+                            first_item = response_data[0]
+                            if isinstance(first_item, dict):
+                                questions_list = []
+                                in_file_count = 0
+                                external_count = 0
+                                
+                                if "in_file_questions" in first_item:
+                                    for q in first_item["in_file_questions"]:
+                                        q["type"] = "in_file"
+                                        questions_list.append(q)
+                                    in_file_count = len(first_item["in_file_questions"])
+                                
+                                if "external_questions" in first_item:
+                                    for q in first_item["external_questions"]:
+                                        q["type"] = "external"
+                                        questions_list.append(q)
+                                    external_count = len(first_item["external_questions"])
                                 
                                 if questions_list:
                                     webhook_response = {
                                         "questions": questions_list,
                                         "total": len(questions_list),
-                                        "in_file_count": len(output.get("in_file_questions", [])),
-                                        "external_count": len(output.get("external_questions", []))
+                                        "in_file_count": in_file_count,
+                                        "external_count": external_count
                                     }
+                                else:
+                                    webhook_response = first_item
+                            else:
+                                webhook_response = response_data[0]
+                        else:
+                            webhook_response = {"text": str(response_data)}
                     except Exception as parse_error:
                         print(f"[Questions] Error parsing webhook response: {str(parse_error)}")
+                        import traceback
+                        print(f"[Questions] Parse error traceback:\n{traceback.format_exc()}")
                         webhook_response = {"text": response.text[:200]}
                     
                     return QuestionsResponse(
