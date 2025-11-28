@@ -10,7 +10,7 @@ const detectAndroid = (): boolean => {
   if (ua.includes("android")) return true;
 
   // Check if Tauri is available and we're on mobile
-  // @ts-ignore - Tauri's __TAURI__ may exist at runtime
+  // @ts-expect-error - Tauri's __TAURI__ may exist at runtime
   if (typeof window !== "undefined" && window.__TAURI__) {
     // Additional check for Tauri mobile
     const isTauriMobile = ua.includes("mobile") || ua.includes("wv");

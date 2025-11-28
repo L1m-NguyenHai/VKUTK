@@ -39,6 +39,7 @@ export function LoginPage({ themeMode }: LoginPageProps) {
   // Check API status on mount and when endpoint changes
   useEffect(() => {
     checkApiStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiEndpoint]);
 
   const checkApiStatus = async () => {

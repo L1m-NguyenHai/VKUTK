@@ -35,7 +35,6 @@ export function Header({
   goForward,
   isSidebarCollapsed,
   setIsSidebarCollapsed,
-  navigateTo,
   setThemeMode,
 }: HeaderProps) {
   const [showSettings, setShowSettings] = useState(false);

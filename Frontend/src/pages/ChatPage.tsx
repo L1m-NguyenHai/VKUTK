@@ -33,8 +33,27 @@ interface Message {
   content: string;
   timestamp: Date;
   command?: string;
-  timetableData?: any; // For timetable responses
-  questionsData?: any; // For questions responses
+  timetableData?: TimetableData; // For timetable responses
+  questionsData?: QuestionData[]; // For questions responses
+}
+
+interface TimetableData {
+  scheduled_sessions: ScheduledSession[];
+  unscheduled_sessions: ScheduledSession[];
+}
+
+interface ScheduledSession {
+  stt_id: string;
+  course_name: string;
+  day: string;
+  time_slots: string;
+  classroom: string;
+}
+
+interface QuestionData {
+  question: string;
+  options: Record<string, string>;
+  answer: string;
 }
 
 interface ChatPageProps {
@@ -51,7 +70,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       if (saved) {
         const parsed = JSON.parse(saved);
         // Convert timestamp strings back to Date objects
-        return parsed.map((msg: any) => ({
+        return parsed.map((msg: Message & { timestamp: string }) => ({
           ...msg,
           timestamp: new Date(msg.timestamp),
         }));
@@ -78,7 +97,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [quizMode, setQuizMode] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [quizQuestions, setQuizQuestions] = useState<QuestionData[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -307,7 +326,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
 
       try {
         result = await response.json();
-      } catch (e) {
+      } catch {
         // If JSON parsing fails, use text response
         const text = await response.text();
         result = { success: false, message: text || "Unknown error" };
@@ -434,10 +453,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
     // Send to backend chat endpoint
     try {
       setIsLoading(true);
-      const payload = {
+      const payload: { message: string; auth_userid: string } = {
         message: messageText,
         auth_userid: user?.id || "anonymous",
-      } as any;
+      };
 
       console.log("[ChatPage] Sending plain chat to backend:", payload);
 
@@ -450,12 +469,18 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         }
       );
 
-      let data;
+      let data: {
+        success?: boolean;
+        message?: string;
+        response?: string;
+        webhook_response?: { text?: string } | string;
+        detail?: string;
+      };
       try {
         data = await response.json();
-      } catch (e) {
+      } catch {
         const text = await response.text();
-        data = { success: false, message: text || "Unknown error" } as any;
+        data = { success: false, message: text || "Unknown error" };
       }
 
       console.log("[ChatPage] Response from chat API:", response.status, data);
@@ -506,7 +531,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
     }
   };
 
-  const handleStartQuiz = (questions: any[]) => {
+  const handleStartQuiz = (questions: QuestionData[]) => {
     setQuizMode(true);
     setQuizQuestions(questions);
   };
@@ -633,7 +658,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    a: ({ node, ...props }) => (
+                    a: ({ ...props }) => (
                       <a
                         {...props}
                         className={`underline hover:opacity-80 ${
@@ -647,13 +672,11 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                         rel="noopener noreferrer"
                       />
                     ),
-                    strong: ({ node, ...props }) => (
+                    strong: ({ ...props }) => (
                       <strong {...props} className="font-bold" />
                     ),
-                    em: ({ node, ...props }) => (
-                      <em {...props} className="italic" />
-                    ),
-                    code: ({ node, className, ...props }) =>
+                    em: ({ ...props }) => <em {...props} className="italic" />,
+                    code: ({ className, ...props }) =>
                       className?.includes("inline") ? (
                         <code
                           {...props}
@@ -677,30 +700,28 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                           }`}
                         />
                       ),
-                    ul: ({ node, ...props }) => (
+                    ul: ({ ...props }) => (
                       <ul {...props} className="list-disc list-inside my-1" />
                     ),
-                    ol: ({ node, ...props }) => (
+                    ol: ({ ...props }) => (
                       <ol
                         {...props}
                         className="list-decimal list-inside my-1"
                       />
                     ),
-                    li: ({ node, children, ...props }) => (
+                    li: ({ children, ...props }) => (
                       <li {...props} className="my-0.5">
                         {children}
                       </li>
                     ),
-                    p: ({ node, ...props }) => (
-                      <p {...props} className="my-1" />
-                    ),
-                    h1: ({ node, ...props }) => (
+                    p: ({ ...props }) => <p {...props} className="my-1" />,
+                    h1: ({ ...props }) => (
                       <h1 {...props} className="text-sm font-bold my-1" />
                     ),
-                    h2: ({ node, ...props }) => (
+                    h2: ({ ...props }) => (
                       <h2 {...props} className="text-xs font-bold my-1" />
                     ),
-                    h3: ({ node, ...props }) => (
+                    h3: ({ ...props }) => (
                       <h3 {...props} className="text-xs font-semibold my-1" />
                     ),
                   }}
@@ -729,7 +750,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                           </h4>
                           <div className="space-y-2">
                             {msg.timetableData.scheduled_sessions.map(
-                              (session: any) => (
+                              (session: ScheduledSession) => (
                                 <div
                                   key={session.stt_id}
                                   className={`p-2 rounded-lg border text-xs ${
@@ -772,7 +793,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                           </h4>
                           <div className="space-y-2">
                             {msg.timetableData.unscheduled_sessions.map(
-                              (session: any) => (
+                              (session: ScheduledSession) => (
                                 <div
                                   key={session.stt_id}
                                   className={`p-2 rounded-lg border text-xs ${

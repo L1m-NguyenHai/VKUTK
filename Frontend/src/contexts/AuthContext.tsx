@@ -12,7 +12,7 @@ interface User {
   email: string;
   email_confirmed: boolean;
   created_at: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface Session {
@@ -30,7 +30,7 @@ interface AuthContextType {
   signUp: (
     email: string,
     password: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signUp = async (
     email: string,
     password: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) => {
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/auth/signup`, {

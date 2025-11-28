@@ -64,7 +64,7 @@ const dayMap: Record<string, number> = {
 // Examples: "1-3" => [1,2,3], "Tiết 1->4" => [1,2,3,4], "6" => [6]
 function parseTimeSlots(time_slots: string): number[] {
   // Remove "Tiết" prefix if present and trim
-  let cleaned = time_slots.replace(/Tiết\s*/gi, "").trim();
+  const cleaned = time_slots.replace(/Tiết\s*/gi, "").trim();
 
   // Handle arrow format (->)
   if (cleaned.includes("->")) {

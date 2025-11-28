@@ -157,6 +157,7 @@ export function SessionCapturePage({ isDarkMode }: SessionCapturePageProps) {
 
   useEffect(() => {
     checkSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
