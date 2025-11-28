@@ -27,6 +27,12 @@ interface Command {
   fields: CommandField[];
 }
 
+interface QuestionsResponseData {
+  questions: QuestionData[];
+  in_file_count?: number;
+  external_count?: number;
+}
+
 interface Message {
   id: string;
   type: "user" | "system" | "command";
@@ -34,7 +40,7 @@ interface Message {
   timestamp: Date;
   command?: string;
   timetableData?: TimetableData; // For timetable responses
-  questionsData?: QuestionData[]; // For questions responses
+  questionsData?: QuestionsResponseData; // For questions responses
 }
 
 interface TimetableData {
@@ -48,6 +54,7 @@ interface ScheduledSession {
   day: string;
   time_slots: string;
   classroom: string;
+  reason_not_selected?: string;
 }
 
 interface QuestionData {
@@ -499,14 +506,15 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         setTimeout(() => setServerError(null), 6000);
       } else {
         // Display AI response in chat
-        const botText =
-          data.message ||
-          data.response ||
-          data.webhook_response?.text ||
-          (typeof data.webhook_response === "string"
+        const webhookText =
+          typeof data.webhook_response === "object" &&
+          data.webhook_response !== null
+            ? (data.webhook_response as { text?: string }).text
+            : typeof data.webhook_response === "string"
             ? data.webhook_response
-            : undefined) ||
-          "(No reply)";
+            : undefined;
+        const botText =
+          data.message || data.response || webhookText || "(No reply)";
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: "system",
@@ -822,7 +830,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                       onClick={() => {
                         // Only import if there are scheduled sessions
                         if (
-                          !msg.timetableData.scheduled_sessions ||
+                          !msg.timetableData?.scheduled_sessions ||
                           msg.timetableData.scheduled_sessions.length === 0
                         ) {
                           alert("❌ Không có môn nào được xếp lịch để lưu!");
@@ -845,7 +853,9 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                         );
 
                         alert(
-                          `✅ Đã lưu ${msg.timetableData.scheduled_sessions.length} môn vào thời khóa biểu!`
+                          `✅ Đã lưu ${
+                            msg.timetableData?.scheduled_sessions?.length ?? 0
+                          } môn vào thời khóa biểu!`
                         );
                       }}
                       className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors ${

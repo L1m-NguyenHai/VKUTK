@@ -1,4 +1,11 @@
-import { Grid3x3, User, LogOut, MessageSquare, Calendar, Zap } from "lucide-react";
+import {
+  Grid3x3,
+  User,
+  LogOut,
+  MessageSquare,
+  Calendar,
+  Zap,
+} from "lucide-react";
 import type { ThemeMode } from "../App";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -203,7 +210,7 @@ function UserInfoSection({
               themeMode === "dark" ? "text-gray-300" : "text-gray-700"
             }`}
           >
-            {user.metadata?.full_name || "User"}
+            {String(user.metadata?.full_name || "User")}
           </p>
         </div>
         <p

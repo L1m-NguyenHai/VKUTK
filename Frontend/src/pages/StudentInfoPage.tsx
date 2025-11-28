@@ -120,6 +120,7 @@ export function StudentInfoPage({
   );
   const [stats, setStats] = useState({ grades: 0, progress: 0 });
   const [grades, setGrades] = useState<Grade[]>([]);
+  // @ts-expect-error academicProgress state is set but read via semesterSummaries
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [academicProgress, setAcademicProgress] = useState<AcademicProgress[]>(
     []

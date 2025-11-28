@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { ThemeMode } from "../App";
 
-type Page = "plugins" | "info" | "schedule" | "timetable";
+type Page = "chat" | "plugins" | "info" | "schedule" | "timetable" | "quiz";
 
 interface HeaderProps {
   themeMode: ThemeMode;

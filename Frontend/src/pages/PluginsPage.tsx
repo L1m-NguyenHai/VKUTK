@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { getApiEndpoint } from "../utils/apiConfig";
 
-type Page = "plugins" | "info" | "settings" | "schedule";
+type Page = "chat" | "plugins" | "info" | "schedule" | "timetable" | "quiz";
 
 interface PluginsPageProps {
   themeMode: ThemeMode;
