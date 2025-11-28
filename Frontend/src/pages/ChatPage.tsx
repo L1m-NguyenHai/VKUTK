@@ -387,6 +387,18 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
               webhookData.unscheduled_sessions?.length || 0;
             responseContent = `✅ Đã tạo thời khóa biểu thành công!\n\n📊 Kết quả:\n• ${scheduledCount} môn đã xếp lịch\n• ${unscheduledCount} môn chưa xếp được`;
           }
+          // Check if this is a research response with download_url
+          else if (
+            webhookData.download_url &&
+            selectedCommand?.command === "research"
+          ) {
+            const totalPages = webhookData.total_pages || "N/A";
+            const status =
+              webhookData.status === "success"
+                ? "✅ Thành công"
+                : webhookData.status;
+            responseContent = `✅ Nghiên cứu hoàn tất!\n\n📊 Kết quả:\n• Trạng thái: ${status}\n• Số trang: ${totalPages} trang\n\n📥 Tải xuống:\n${webhookData.download_url}`;
+          }
           // Check if it's an AI agent response with output
           else if (webhookData.output) {
             responseContent = `🤖 ${webhookData.output}`;

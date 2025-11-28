@@ -83,7 +83,7 @@ class QuestionsCog(BaseCog):
                 )
             ]
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook-test/questions"
+        self.webhook_url = "https://n8n.group12.cloud/webhook/questions"
         self.command_history = []
         
     def setup(self):
