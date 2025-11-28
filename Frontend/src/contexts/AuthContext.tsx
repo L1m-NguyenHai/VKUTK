@@ -7,12 +7,17 @@ import {
 } from "react";
 import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
 
+interface UserMetadata {
+  full_name?: string;
+  [key: string]: unknown;
+}
+
 interface User {
   id: string;
   email: string;
   email_confirmed: boolean;
   created_at: string;
-  metadata?: Record<string, unknown>;
+  metadata?: UserMetadata;
 }
 
 interface Session {
