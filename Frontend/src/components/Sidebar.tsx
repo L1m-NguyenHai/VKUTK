@@ -210,7 +210,7 @@ function UserInfoSection({
               themeMode === "dark" ? "text-gray-300" : "text-gray-700"
             }`}
           >
-            {String(user.metadata?.full_name || "User")}
+            {user.metadata?.full_name || "User"}
           </p>
         </div>
         <p
