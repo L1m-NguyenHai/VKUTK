@@ -1,4 +1,11 @@
-import { Grid3x3, User, LogOut, MessageSquare, Calendar, Zap } from "lucide-react";
+import {
+  Grid3x3,
+  User,
+  LogOut,
+  MessageSquare,
+  Calendar,
+  Zap,
+} from "lucide-react";
 import type { ThemeMode } from "../App";
 import { useAuth } from "../contexts/AuthContext";
 

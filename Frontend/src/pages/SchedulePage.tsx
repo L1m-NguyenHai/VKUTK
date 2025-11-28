@@ -5,7 +5,7 @@ interface SchedulePageProps {
   themeMode: ThemeMode;
 }
 
-export function SchedulePage({ themeMode = false }: SchedulePageProps) {
+export function SchedulePage({ themeMode }: SchedulePageProps) {
   const schedule = [
     {
       id: 1,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Trash2, TrendingUp, BarChart3, ChevronDown } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { ThemeMode } from "../App";
 
 interface Question {
@@ -31,9 +31,6 @@ export const QuizResultsPage: React.FC<QuizResultsPageProps> = ({
 }) => {
   const [results, setResults] = useState<QuizResult[]>([]);
   const [expandedResult, setExpandedResult] = useState<number | null>(null);
-  const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(
-    new Set()
-  );
 
   useEffect(() => {
     // Load results from localStorage
@@ -42,10 +39,12 @@ export const QuizResultsPage: React.FC<QuizResultsPageProps> = ({
       if (saved) {
         const parsed = JSON.parse(saved);
         // Convert timestamp strings back to Date objects
-        const withDates = parsed.map((r: any) => ({
-          ...r,
-          timestamp: new Date(r.timestamp),
-        }));
+        const withDates = parsed.map(
+          (r: QuizResult & { timestamp: string }) => ({
+            ...r,
+            timestamp: new Date(r.timestamp),
+          })
+        );
         setResults(withDates);
       }
     } catch (e) {
@@ -87,7 +86,9 @@ export const QuizResultsPage: React.FC<QuizResultsPageProps> = ({
       };
 
     const scores = results.map((r) => r.score);
-    const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const averageScore = Math.round(
+      scores.reduce((a, b) => a + b, 0) / scores.length
+    );
     const bestScore = Math.max(...scores);
     const worstScore = Math.min(...scores);
 
@@ -345,9 +346,7 @@ export const QuizResultsPage: React.FC<QuizResultsPageProps> = ({
                       {/* Result Header */}
                       <button
                         onClick={() =>
-                          setExpandedResult(
-                            isExpanded ? null : actualIndex
-                          )
+                          setExpandedResult(isExpanded ? null : actualIndex)
                         }
                         className={`w-full p-4 flex items-center justify-between hover:opacity-80 transition ${
                           themeMode === "dark"
@@ -410,7 +409,6 @@ export const QuizResultsPage: React.FC<QuizResultsPageProps> = ({
                           <Trash2 size={18} />
                         </button>
                       </button>
-
                       {/* Result Details */}
                       {isExpanded && (
                         <div
@@ -582,7 +580,8 @@ export const QuizResultsPage: React.FC<QuizResultsPageProps> = ({
                             </div>
                           )}
                         </div>
-                      )}                    </div>
+                      )}{" "}
+                    </div>
                   );
                 })}
             </div>

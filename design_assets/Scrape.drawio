@@ -1,0 +1,96 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="28.2.8">
+  <diagram name="Page-1" id="yRf4IeWdxsUL6P-Zyk0a">
+    <mxGraphModel dx="2226" dy="1149" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="LBNixFXgk5SyokuEPa6r-1" value="User" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="-420" y="-366" width="351" height="573" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="LBNixFXgk5SyokuEPa6r-1" source="LBNixFXgk5SyokuEPa6r-3" target="LBNixFXgk5SyokuEPa6r-4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-3" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="LBNixFXgk5SyokuEPa6r-1" vertex="1">
+          <mxGeometry x="158.5" y="33" width="27" height="27" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="LBNixFXgk5SyokuEPa6r-1" source="LBNixFXgk5SyokuEPa6r-4" target="LBNixFXgk5SyokuEPa6r-8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-4" value="Người dùng truy cập vào ứng dụng và truy cập mục thông tin" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-1" vertex="1">
+          <mxGeometry x="84" y="84" width="176" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-8" value="Người dùng nhấn &quot;Khởi tạo&quot;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-1" vertex="1">
+          <mxGeometry x="84" y="159" width="176" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="LBNixFXgk5SyokuEPa6r-1" source="LBNixFXgk5SyokuEPa6r-22" target="LBNixFXgk5SyokuEPa6r-24" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-22" value="Người dùng đăng nhập vào trang Daotao trên giao diện trình duyệt ảo" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-1" vertex="1">
+          <mxGeometry x="84" y="259" width="176" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-24" value="Người dùng nhấp scape trên giao diện FE" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-1" vertex="1">
+          <mxGeometry x="84" y="333" width="176" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-2" value="System" style="swimlane;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="-69" y="-366" width="351" height="573" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="LBNixFXgk5SyokuEPa6r-2" source="LBNixFXgk5SyokuEPa6r-11" target="LBNixFXgk5SyokuEPa6r-13" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="LBNixFXgk5SyokuEPa6r-2" source="LBNixFXgk5SyokuEPa6r-11" target="LBNixFXgk5SyokuEPa6r-18" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-11" value="&lt;font&gt;&amp;nbsp;Backend đã khởi chạy ?&lt;/font&gt;" style="rhombus;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-2" vertex="1">
+          <mxGeometry x="40" y="65.5" width="141" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-13" value="&lt;font&gt;Tạo trình duyệt ảo đợi người dùng đăng nhập tại trang&amp;nbsp;https://daotao.vku.udn.vn/sv&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-2" vertex="1">
+          <mxGeometry x="22.5" y="194" width="176" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-17" value="đúng" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="LBNixFXgk5SyokuEPa6r-2" vertex="1">
+          <mxGeometry x="69" y="153" width="45" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" parent="LBNixFXgk5SyokuEPa6r-2" source="LBNixFXgk5SyokuEPa6r-18" target="LBNixFXgk5SyokuEPa6r-16" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="283" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-18" value="&lt;font&gt;In thông báo &quot;Can&#39;t fetch to backend&quot;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-2" vertex="1">
+          <mxGeometry x="231" y="79.5" width="109" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="LBNixFXgk5SyokuEPa6r-2" source="LBNixFXgk5SyokuEPa6r-28" target="LBNixFXgk5SyokuEPa6r-16" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-28" value="Thông tin Scape được lưu và in lên FE" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;" parent="LBNixFXgk5SyokuEPa6r-2" vertex="1">
+          <mxGeometry x="22.5" y="333" width="176" height="43" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-31" value="" style="group" parent="LBNixFXgk5SyokuEPa6r-2" vertex="1" connectable="0">
+          <mxGeometry x="177" y="515" width="32" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-16" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="LBNixFXgk5SyokuEPa6r-31" vertex="1">
+          <mxGeometry width="32" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-15" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000000;" parent="LBNixFXgk5SyokuEPa6r-31" vertex="1">
+          <mxGeometry x="5" y="5" width="22" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-35" value="sai" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="LBNixFXgk5SyokuEPa6r-2" vertex="1">
+          <mxGeometry x="181" y="79.5" width="33" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="LBNixFXgk5SyokuEPa6r-8" target="LBNixFXgk5SyokuEPa6r-11" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="LBNixFXgk5SyokuEPa6r-24" target="LBNixFXgk5SyokuEPa6r-28" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LBNixFXgk5SyokuEPa6r-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=1;" parent="1" source="LBNixFXgk5SyokuEPa6r-13" target="LBNixFXgk5SyokuEPa6r-22" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="42" y="-83" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

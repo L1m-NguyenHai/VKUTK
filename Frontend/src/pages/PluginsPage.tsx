@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { getApiEndpoint } from "../utils/apiConfig";
 
-type Page = "plugins" | "info" | "settings" | "schedule";
+type Page = "chat" | "plugins" | "info" | "schedule" | "timetable" | "quiz";
 
 interface PluginsPageProps {
   themeMode: ThemeMode;
@@ -73,7 +73,7 @@ export function PluginsPage({ themeMode }: PluginsPageProps) {
       // Check if response is JSON
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
+        await response.text(); // consume body
         throw new Error(
           `API returned non-JSON response. Content-Type: ${contentType}`
         );
@@ -102,6 +102,7 @@ export function PluginsPage({ themeMode }: PluginsPageProps) {
 
   useEffect(() => {
     loadPlugins();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save to localStorage whenever enabledPlugins changes
