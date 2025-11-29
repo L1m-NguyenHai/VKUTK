@@ -5,7 +5,6 @@ import {
   RefreshCw,
   Plug,
   CheckCircle,
-  XCircle,
   Code,
   User,
   Package,
