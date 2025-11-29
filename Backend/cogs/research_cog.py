@@ -125,8 +125,8 @@ class ResearchCog(BaseCog):
                 print(f"[Research] Sending to webhook: {self.webhook_url}")
                 print(f"[Research] Payload: {payload}")
                 
-                # Send to n8n webhook
-                async with httpx.AsyncClient(timeout=600.0) as client:
+                # Send to n8n webhook (1 hour timeout for long research)
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.webhook_url,
                         json=payload,

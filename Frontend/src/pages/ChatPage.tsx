@@ -1,5 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Slash } from "lucide-react";
+import {
+  Send,
+  Slash,
+  Plug,
+  // Plugin icons
+  Zap,
+  MessageCircle,
+  Brain,
+  FileText,
+  HelpCircle,
+  MessageCircleQuestion,
+  Calendar,
+  Award,
+  Search,
+  Briefcase,
+  type LucideIcon,
+} from "lucide-react";
 import { ThemeMode } from "../App";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -7,6 +23,29 @@ import { useAuth } from "../contexts/AuthContext";
 import { QuestionsDisplay } from "../components/QuestionsDisplay";
 import { QuizPage } from "./QuizPage";
 import { getApiEndpoint, getApiHeaders } from "../utils/apiConfig";
+
+// Icon mapping from string names to Lucide components
+const iconMap: Record<string, LucideIcon> = {
+  Zap,
+  MessageCircle,
+  Brain,
+  FileText,
+  HelpCircle,
+  MessageCircleQuestion,
+  Calendar,
+  Award,
+  Search,
+  Briefcase,
+  Plug, // fallback
+};
+
+// Helper function to get icon component from string name
+const getPluginIcon = (iconName?: string): LucideIcon => {
+  if (iconName && iconMap[iconName]) {
+    return iconMap[iconName];
+  }
+  return Plug; // fallback icon
+};
 
 interface CommandField {
   name: string;
@@ -41,6 +80,7 @@ interface Message {
   command?: string;
   timetableData?: TimetableData; // For timetable responses
   questionsData?: QuestionsResponseData; // For questions responses
+  isPending?: boolean; // For pending/loading messages
 }
 
 interface TimetableData {
@@ -65,9 +105,10 @@ interface QuestionData {
 
 interface ChatPageProps {
   themeMode: ThemeMode;
+  searchQuery?: string;
 }
 
-const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
+const ChatPage: React.FC<ChatPageProps> = ({ themeMode, searchQuery = "" }) => {
   const { user } = useAuth();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -101,12 +142,31 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
   const [commandValues, setCommandValues] = useState<
     Record<string, string | string[] | Record<string, string> | File>
   >({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(() => {
+    // Check if there's a pending message in localStorage
+    try {
+      const saved = localStorage.getItem("vku_chat_messages");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.some((msg: Message) => msg.isPending === true);
+      }
+    } catch (e) {
+      console.error("Failed to check pending messages:", e);
+    }
+    return false;
+  });
   const [serverError, setServerError] = useState<string | null>(null);
   const [quizMode, setQuizMode] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<QuestionData[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Filter messages based on search query
+  const filteredMessages = messages.filter((msg) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return msg.content.toLowerCase().includes(query);
+  });
 
   // Fetch available commands
   useEffect(() => {
@@ -236,17 +296,37 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       }
     }
 
+    // Store values before closing modal
+    const command = selectedCommand;
+    const values = { ...commandValues };
+
+    // Close modal immediately
+    setSelectedCommand(null);
+    setCommandValues({});
+    setInput("");
+
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
-      content: `/${selectedCommand.command} ${Object.entries(commandValues)
+      content: `/${command.command} ${Object.entries(values)
         .map(([k, v]) => `${k}: ${v}`)
         .join(", ")}`,
       timestamp: new Date(),
-      command: selectedCommand.command,
+      command: command.command,
     };
-    setMessages((prev) => [...prev, userMessage]);
+
+    // Add pending message to show loading state (persisted in localStorage)
+    const pendingMessageId = (Date.now() + 1).toString();
+    const pendingMessage: Message = {
+      id: pendingMessageId,
+      type: "system",
+      content: `⏳ Đang xử lý lệnh /${command.command}...`,
+      timestamp: new Date(),
+      isPending: true,
+    };
+
+    setMessages((prev) => [...prev, userMessage, pendingMessage]);
     setIsLoading(true);
 
     try {
@@ -256,21 +336,16 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       let response;
 
       // Check if this command has file field (like /summary)
-      const hasFileField = selectedCommand.fields.some(
-        (f) => f.type === "file"
-      );
+      const hasFileField = command.fields.some((f) => f.type === "file");
 
       if (hasFileField) {
         // Use FormData for file uploads
         const formData = new FormData();
 
-        console.log(
-          "[DEBUG] Building FormData with commandValues:",
-          commandValues
-        );
+        console.log("[DEBUG] Building FormData with values:", values);
 
         // Add all command values
-        Object.entries(commandValues).forEach(([key, value]) => {
+        Object.entries(values).forEach(([key, value]) => {
           console.log(`[DEBUG] Processing field ${key}:`, value, typeof value);
           if (value instanceof File) {
             // It's a file
@@ -301,7 +376,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
         // Important: Don't set Content-Type header for FormData - browser sets it automatically with boundary
         // Only use ngrok-skip-browser-warning header
         response = await fetch(
-          `${getApiEndpoint()}/api/plugins/${selectedCommand.cog_id}/execute`,
+          `${getApiEndpoint()}/api/plugins/${command.cog_id}/execute`,
           {
             method: "POST",
             headers: {
@@ -314,12 +389,12 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       } else {
         // Use JSON for non-file commands
         const requestBody = {
-          ...commandValues,
+          ...values,
           auth_userid: userId,
         };
 
         response = await fetch(
-          `${getApiEndpoint()}/api/plugins/${selectedCommand.cog_id}/execute`,
+          `${getApiEndpoint()}/api/plugins/${command.cog_id}/execute`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json", ...getApiHeaders() },
@@ -367,7 +442,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
           if (
             webhookData.questions &&
             Array.isArray(webhookData.questions) &&
-            selectedCommand?.command === "questions"
+            command?.command === "questions"
           ) {
             questionsData = webhookData;
             const totalQuestions =
@@ -379,7 +454,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
           // Check if this is a timetable response
           else if (
             webhookData.scheduled_sessions &&
-            selectedCommand?.command === "timetable"
+            command?.command === "timetable"
           ) {
             timetableData = webhookData;
             const scheduledCount = webhookData.scheduled_sessions.length;
@@ -390,7 +465,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
           // Check if this is a research response with download_url
           else if (
             webhookData.download_url &&
-            selectedCommand?.command === "research"
+            command?.command === "research"
           ) {
             const totalPages = webhookData.total_pages || "N/A";
             const status =
@@ -422,32 +497,35 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
       }
 
       const systemMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: pendingMessageId,
         type: "system",
         content: responseContent,
         timestamp: new Date(),
         timetableData: timetableData,
         questionsData: questionsData,
+        isPending: false,
       };
-      setMessages((prev) => [...prev, systemMessage]);
+      // Replace pending message with actual response
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === pendingMessageId ? systemMessage : msg))
+      );
     } catch (error) {
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: pendingMessageId,
         type: "system",
         content: `❌ Failed to execute command: ${
           error instanceof Error ? error.message : String(error)
         }`,
         timestamp: new Date(),
+        isPending: false,
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      // Replace pending message with error
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === pendingMessageId ? errorMessage : msg))
+      );
     } finally {
       setIsLoading(false);
     }
-
-    // Reset
-    setInput("");
-    setSelectedCommand(null);
-    setCommandValues({});
   };
 
   const handleSend = async () => {
@@ -646,262 +724,275 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {messages.map((msg) => (
+        {searchQuery.trim() && filteredMessages.length === 0 ? (
           <div
-            key={msg.id}
-            className={`flex ${
-              msg.type === "user" ? "justify-end" : "justify-start"
+            className={`text-center py-8 ${
+              themeMode === "dark" ? "text-gray-400" : "text-gray-500"
             }`}
           >
+            <p>Không tìm thấy tin nhắn nào chứa "{searchQuery}"</p>
+          </div>
+        ) : (
+          filteredMessages.map((msg) => (
             <div
-              className={`max-w-2xl px-3 py-1.5 rounded-lg ${
-                msg.type === "user"
-                  ? themeMode === "dark"
-                    ? "bg-blue-600 text-white"
-                    : themeMode === "cream"
-                    ? "bg-[#dcd6c1] text-[#6a777e]"
-                    : "bg-blue-500 text-white"
-                  : msg.type === "system"
-                  ? themeMode === "dark"
-                    ? "bg-gray-700 text-white"
-                    : themeMode === "cream"
-                    ? "bg-[#eee9d4] border border-[#dcd6c1] text-[#6a777e]"
-                    : "bg-white border border-gray-200 text-gray-800"
-                  : themeMode === "dark"
-                  ? "bg-purple-900 text-purple-100"
-                  : themeMode === "cream"
-                  ? "bg-[#eee9d4] border border-[#dcd6c1] text-[#6a777e]"
-                  : "bg-purple-50 border border-purple-200 text-purple-900"
+              key={msg.id}
+              className={`flex ${
+                msg.type === "user" ? "justify-end" : "justify-start"
               }`}
             >
-              <div className="text-xs leading-relaxed break-words">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({ ...props }) => (
-                      <a
-                        {...props}
-                        className={`underline hover:opacity-80 ${
-                          themeMode === "dark"
-                            ? "text-blue-400"
-                            : themeMode === "cream"
-                            ? "text-[#6a777e] font-semibold"
-                            : "text-blue-600"
-                        }`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    ),
-                    strong: ({ ...props }) => (
-                      <strong {...props} className="font-bold" />
-                    ),
-                    em: ({ ...props }) => <em {...props} className="italic" />,
-                    code: ({ className, ...props }) =>
-                      className?.includes("inline") ? (
-                        <code
+              <div
+                className={`max-w-2xl px-3 py-1.5 rounded-lg ${
+                  msg.type === "user"
+                    ? themeMode === "dark"
+                      ? "bg-blue-600 text-white"
+                      : themeMode === "cream"
+                      ? "bg-[#dcd6c1] text-[#6a777e]"
+                      : "bg-blue-500 text-white"
+                    : msg.type === "system"
+                    ? themeMode === "dark"
+                      ? "bg-gray-700 text-white"
+                      : themeMode === "cream"
+                      ? "bg-[#eee9d4] border border-[#dcd6c1] text-[#6a777e]"
+                      : "bg-white border border-gray-200 text-gray-800"
+                    : themeMode === "dark"
+                    ? "bg-purple-900 text-purple-100"
+                    : themeMode === "cream"
+                    ? "bg-[#eee9d4] border border-[#dcd6c1] text-[#6a777e]"
+                    : "bg-purple-50 border border-purple-200 text-purple-900"
+                }`}
+              >
+                <div className="text-xs leading-relaxed break-words">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      a: ({ ...props }) => (
+                        <a
                           {...props}
-                          className={`px-1 py-0.5 rounded text-xs ${
+                          className={`underline hover:opacity-80 ${
                             themeMode === "dark"
-                              ? "bg-gray-600"
+                              ? "text-blue-400"
                               : themeMode === "cream"
-                              ? "bg-[#dcd6c1]"
-                              : "bg-gray-200"
+                              ? "text-[#6a777e] font-semibold"
+                              : "text-blue-600"
                           }`}
-                        />
-                      ) : (
-                        <code
-                          {...props}
-                          className={`block px-2 py-1 rounded text-xs overflow-x-auto ${
-                            themeMode === "dark"
-                              ? "bg-gray-600"
-                              : themeMode === "cream"
-                              ? "bg-[#dcd6c1]"
-                              : "bg-gray-200"
-                          }`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                         />
                       ),
-                    ul: ({ ...props }) => (
-                      <ul {...props} className="list-disc list-inside my-1" />
-                    ),
-                    ol: ({ ...props }) => (
-                      <ol
-                        {...props}
-                        className="list-decimal list-inside my-1"
+                      strong: ({ ...props }) => (
+                        <strong {...props} className="font-bold" />
+                      ),
+                      em: ({ ...props }) => (
+                        <em {...props} className="italic" />
+                      ),
+                      code: ({ className, ...props }) =>
+                        className?.includes("inline") ? (
+                          <code
+                            {...props}
+                            className={`px-1 py-0.5 rounded text-xs ${
+                              themeMode === "dark"
+                                ? "bg-gray-600"
+                                : themeMode === "cream"
+                                ? "bg-[#dcd6c1]"
+                                : "bg-gray-200"
+                            }`}
+                          />
+                        ) : (
+                          <code
+                            {...props}
+                            className={`block px-2 py-1 rounded text-xs overflow-x-auto ${
+                              themeMode === "dark"
+                                ? "bg-gray-600"
+                                : themeMode === "cream"
+                                ? "bg-[#dcd6c1]"
+                                : "bg-gray-200"
+                            }`}
+                          />
+                        ),
+                      ul: ({ ...props }) => (
+                        <ul {...props} className="list-disc list-inside my-1" />
+                      ),
+                      ol: ({ ...props }) => (
+                        <ol
+                          {...props}
+                          className="list-decimal list-inside my-1"
+                        />
+                      ),
+                      li: ({ children, ...props }) => (
+                        <li {...props} className="my-0.5">
+                          {children}
+                        </li>
+                      ),
+                      p: ({ ...props }) => <p {...props} className="my-1" />,
+                      h1: ({ ...props }) => (
+                        <h1 {...props} className="text-sm font-bold my-1" />
+                      ),
+                      h2: ({ ...props }) => (
+                        <h2 {...props} className="text-xs font-bold my-1" />
+                      ),
+                      h3: ({ ...props }) => (
+                        <h3 {...props} className="text-xs font-semibold my-1" />
+                      ),
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+
+                  {/* Timetable Display */}
+                  {msg.timetableData && (
+                    <div className="mt-3 space-y-3">
+                      {/* Scheduled Sessions */}
+                      {msg.timetableData.scheduled_sessions &&
+                        msg.timetableData.scheduled_sessions.length > 0 && (
+                          <div>
+                            <h4
+                              className={`text-sm font-semibold mb-2 ${
+                                themeMode === "dark"
+                                  ? "text-green-400"
+                                  : themeMode === "cream"
+                                  ? "text-green-700"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              📅 Lịch học (
+                              {msg.timetableData.scheduled_sessions.length} môn)
+                            </h4>
+                            <div className="space-y-2">
+                              {msg.timetableData.scheduled_sessions.map(
+                                (session: ScheduledSession) => (
+                                  <div
+                                    key={session.stt_id}
+                                    className={`p-2 rounded-lg border text-xs ${
+                                      themeMode === "dark"
+                                        ? "bg-gray-700 border-gray-600"
+                                        : themeMode === "cream"
+                                        ? "bg-[#fdf6e3] border-[#dcd6c1]"
+                                        : "bg-gray-50 border-gray-200"
+                                    }`}
+                                  >
+                                    <div className="font-semibold">
+                                      {session.course_name}
+                                    </div>
+                                    <div className="text-[10px] opacity-80 mt-1">
+                                      {session.day} • {session.time_slots} •
+                                      Phòng {session.classroom}
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Unscheduled Sessions */}
+                      {msg.timetableData.unscheduled_sessions &&
+                        msg.timetableData.unscheduled_sessions.length > 0 && (
+                          <div>
+                            <h4
+                              className={`text-sm font-semibold mb-2 ${
+                                themeMode === "dark"
+                                  ? "text-yellow-400"
+                                  : themeMode === "cream"
+                                  ? "text-yellow-700"
+                                  : "text-yellow-600"
+                              }`}
+                            >
+                              ⚠️ Chưa xếp được (
+                              {msg.timetableData.unscheduled_sessions.length}{" "}
+                              môn)
+                            </h4>
+                            <div className="space-y-2">
+                              {msg.timetableData.unscheduled_sessions.map(
+                                (session: ScheduledSession) => (
+                                  <div
+                                    key={session.stt_id}
+                                    className={`p-2 rounded-lg border text-xs ${
+                                      themeMode === "dark"
+                                        ? "bg-yellow-900/20 border-yellow-700"
+                                        : themeMode === "cream"
+                                        ? "bg-yellow-50 border-yellow-300"
+                                        : "bg-yellow-50 border-yellow-200"
+                                    }`}
+                                  >
+                                    <div className="font-semibold">
+                                      {session.course_name}
+                                    </div>
+                                    <div className="text-[10px] opacity-80 mt-1">
+                                      {session.reason_not_selected}
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Import Button */}
+                      <button
+                        onClick={() => {
+                          // Only import if there are scheduled sessions
+                          if (
+                            !msg.timetableData?.scheduled_sessions ||
+                            msg.timetableData.scheduled_sessions.length === 0
+                          ) {
+                            alert("❌ Không có môn nào được xếp lịch để lưu!");
+                            return;
+                          }
+
+                          // Save to localStorage (keep last 3)
+                          const saved = JSON.parse(
+                            localStorage.getItem("saved_timetables") || "[]"
+                          );
+                          const newTimetable = {
+                            id: Date.now(),
+                            timestamp: new Date().toISOString(),
+                            data: msg.timetableData,
+                          };
+                          saved.unshift(newTimetable);
+                          localStorage.setItem(
+                            "saved_timetables",
+                            JSON.stringify(saved.slice(0, 3))
+                          );
+
+                          alert(
+                            `✅ Đã lưu ${
+                              msg.timetableData?.scheduled_sessions?.length ?? 0
+                            } môn vào thời khóa biểu!`
+                          );
+                        }}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          themeMode === "dark"
+                            ? "bg-blue-600 hover:bg-blue-700 text-white"
+                            : themeMode === "cream"
+                            ? "bg-[#b3b6ae] hover:bg-[#9a9d96] text-white"
+                            : "bg-blue-500 hover:bg-blue-600 text-white"
+                        }`}
+                      >
+                        💾 Lưu thời khóa biểu này
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Questions Display */}
+                  {msg.questionsData && msg.questionsData.questions && (
+                    <div className="mt-3">
+                      <QuestionsDisplay
+                        questions={msg.questionsData.questions}
+                        inFileCount={msg.questionsData.in_file_count || 0}
+                        externalCount={msg.questionsData.external_count || 0}
+                        isDarkMode={themeMode === "dark"}
+                        onStartQuiz={handleStartQuiz}
                       />
-                    ),
-                    li: ({ children, ...props }) => (
-                      <li {...props} className="my-0.5">
-                        {children}
-                      </li>
-                    ),
-                    p: ({ ...props }) => <p {...props} className="my-1" />,
-                    h1: ({ ...props }) => (
-                      <h1 {...props} className="text-sm font-bold my-1" />
-                    ),
-                    h2: ({ ...props }) => (
-                      <h2 {...props} className="text-xs font-bold my-1" />
-                    ),
-                    h3: ({ ...props }) => (
-                      <h3 {...props} className="text-xs font-semibold my-1" />
-                    ),
-                  }}
-                >
-                  {msg.content}
-                </ReactMarkdown>
-
-                {/* Timetable Display */}
-                {msg.timetableData && (
-                  <div className="mt-3 space-y-3">
-                    {/* Scheduled Sessions */}
-                    {msg.timetableData.scheduled_sessions &&
-                      msg.timetableData.scheduled_sessions.length > 0 && (
-                        <div>
-                          <h4
-                            className={`text-sm font-semibold mb-2 ${
-                              themeMode === "dark"
-                                ? "text-green-400"
-                                : themeMode === "cream"
-                                ? "text-green-700"
-                                : "text-green-600"
-                            }`}
-                          >
-                            📅 Lịch học (
-                            {msg.timetableData.scheduled_sessions.length} môn)
-                          </h4>
-                          <div className="space-y-2">
-                            {msg.timetableData.scheduled_sessions.map(
-                              (session: ScheduledSession) => (
-                                <div
-                                  key={session.stt_id}
-                                  className={`p-2 rounded-lg border text-xs ${
-                                    themeMode === "dark"
-                                      ? "bg-gray-700 border-gray-600"
-                                      : themeMode === "cream"
-                                      ? "bg-[#fdf6e3] border-[#dcd6c1]"
-                                      : "bg-gray-50 border-gray-200"
-                                  }`}
-                                >
-                                  <div className="font-semibold">
-                                    {session.course_name}
-                                  </div>
-                                  <div className="text-[10px] opacity-80 mt-1">
-                                    {session.day} • {session.time_slots} • Phòng{" "}
-                                    {session.classroom}
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Unscheduled Sessions */}
-                    {msg.timetableData.unscheduled_sessions &&
-                      msg.timetableData.unscheduled_sessions.length > 0 && (
-                        <div>
-                          <h4
-                            className={`text-sm font-semibold mb-2 ${
-                              themeMode === "dark"
-                                ? "text-yellow-400"
-                                : themeMode === "cream"
-                                ? "text-yellow-700"
-                                : "text-yellow-600"
-                            }`}
-                          >
-                            ⚠️ Chưa xếp được (
-                            {msg.timetableData.unscheduled_sessions.length} môn)
-                          </h4>
-                          <div className="space-y-2">
-                            {msg.timetableData.unscheduled_sessions.map(
-                              (session: ScheduledSession) => (
-                                <div
-                                  key={session.stt_id}
-                                  className={`p-2 rounded-lg border text-xs ${
-                                    themeMode === "dark"
-                                      ? "bg-yellow-900/20 border-yellow-700"
-                                      : themeMode === "cream"
-                                      ? "bg-yellow-50 border-yellow-300"
-                                      : "bg-yellow-50 border-yellow-200"
-                                  }`}
-                                >
-                                  <div className="font-semibold">
-                                    {session.course_name}
-                                  </div>
-                                  <div className="text-[10px] opacity-80 mt-1">
-                                    {session.reason_not_selected}
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Import Button */}
-                    <button
-                      onClick={() => {
-                        // Only import if there are scheduled sessions
-                        if (
-                          !msg.timetableData?.scheduled_sessions ||
-                          msg.timetableData.scheduled_sessions.length === 0
-                        ) {
-                          alert("❌ Không có môn nào được xếp lịch để lưu!");
-                          return;
-                        }
-
-                        // Save to localStorage (keep last 3)
-                        const saved = JSON.parse(
-                          localStorage.getItem("saved_timetables") || "[]"
-                        );
-                        const newTimetable = {
-                          id: Date.now(),
-                          timestamp: new Date().toISOString(),
-                          data: msg.timetableData,
-                        };
-                        saved.unshift(newTimetable);
-                        localStorage.setItem(
-                          "saved_timetables",
-                          JSON.stringify(saved.slice(0, 3))
-                        );
-
-                        alert(
-                          `✅ Đã lưu ${
-                            msg.timetableData?.scheduled_sessions?.length ?? 0
-                          } môn vào thời khóa biểu!`
-                        );
-                      }}
-                      className={`w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                        themeMode === "dark"
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
-                          : themeMode === "cream"
-                          ? "bg-[#b3b6ae] hover:bg-[#9a9d96] text-white"
-                          : "bg-blue-500 hover:bg-blue-600 text-white"
-                      }`}
-                    >
-                      💾 Lưu thời khóa biểu này
-                    </button>
-                  </div>
-                )}
-
-                {/* Questions Display */}
-                {msg.questionsData && msg.questionsData.questions && (
-                  <div className="mt-3">
-                    <QuestionsDisplay
-                      questions={msg.questionsData.questions}
-                      inFileCount={msg.questionsData.in_file_count || 0}
-                      externalCount={msg.questionsData.external_count || 0}
-                      isDarkMode={themeMode === "dark"}
-                      onStartQuiz={handleStartQuiz}
-                    />
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
+                <span className="text-[10px] opacity-70 mt-0.5 block">
+                  {msg.timestamp.toLocaleTimeString()}
+                </span>
               </div>
-              <span className="text-[10px] opacity-70 mt-0.5 block">
-                {msg.timestamp.toLocaleTimeString()}
-              </span>
             </div>
-          </div>
-        ))}
+          ))
+        )}
 
         {/* Loading Indicator */}
         {isLoading && (
@@ -1408,53 +1499,56 @@ const ChatPage: React.FC<ChatPageProps> = ({ themeMode }) => {
                   </button>
 
                   {/* Plugin commands */}
-                  {commands.map((cmd) => (
-                    <button
-                      key={cmd.command}
-                      onClick={() => handleCommandSelect(cmd)}
-                      className={`w-full px-3 py-2 text-left flex items-center gap-2 ${
-                        themeMode === "dark"
-                          ? "hover:bg-gray-700"
-                          : themeMode === "cream"
-                          ? "hover:bg-[#dcd6c1]"
-                          : "hover:bg-gray-100"
-                      }`}
-                    >
-                      <Slash
-                        className={`w-4 h-4 ${
+                  {commands.map((cmd) => {
+                    const IconComponent = getPluginIcon(cmd.icon);
+                    const colorClass =
+                      cmd.color && cmd.color.trim() !== ""
+                        ? cmd.color
+                        : "from-gray-500 to-gray-600";
+                    return (
+                      <button
+                        key={cmd.command}
+                        onClick={() => handleCommandSelect(cmd)}
+                        className={`w-full px-3 py-2 text-left flex items-center gap-2 ${
                           themeMode === "dark"
-                            ? "text-gray-400"
+                            ? "hover:bg-gray-700"
                             : themeMode === "cream"
-                            ? "text-[#b3b6ae]"
-                            : "text-blue-500"
+                            ? "hover:bg-[#dcd6c1]"
+                            : "hover:bg-gray-100"
                         }`}
-                      />
-                      <div>
+                      >
                         <div
-                          className={`text-xs font-medium ${
-                            themeMode === "dark"
-                              ? "text-white"
-                              : themeMode === "cream"
-                              ? "text-[#6a777e]"
-                              : "text-gray-900"
-                          }`}
+                          className={`w-6 h-6 rounded bg-gradient-to-br ${colorClass} flex items-center justify-center text-white`}
                         >
-                          /{cmd.command}
+                          <IconComponent className="w-3.5 h-3.5" />
                         </div>
-                        <div
-                          className={`text-[10px] ${
-                            themeMode === "dark"
-                              ? "text-gray-400"
-                              : themeMode === "cream"
-                              ? "text-[#b3b6ae]"
-                              : "text-gray-600"
-                          }`}
-                        >
-                          {cmd.description}
+                        <div>
+                          <div
+                            className={`text-xs font-medium ${
+                              themeMode === "dark"
+                                ? "text-white"
+                                : themeMode === "cream"
+                                ? "text-[#6a777e]"
+                                : "text-gray-900"
+                            }`}
+                          >
+                            /{cmd.command}
+                          </div>
+                          <div
+                            className={`text-[10px] ${
+                              themeMode === "dark"
+                                ? "text-gray-400"
+                                : themeMode === "cream"
+                                ? "text-[#b3b6ae]"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {cmd.description}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </>
               )}
             </div>

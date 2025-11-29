@@ -23,6 +23,7 @@ interface HeaderProps {
   setIsSidebarCollapsed: (collapsed: boolean) => void;
   navigateTo?: (page: Page) => void;
   setThemeMode: (mode: ThemeMode) => void;
+  currentPage?: Page;
 }
 
 export function Header({
@@ -36,6 +37,7 @@ export function Header({
   isSidebarCollapsed,
   setIsSidebarCollapsed,
   setThemeMode,
+  currentPage,
 }: HeaderProps) {
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -126,26 +128,37 @@ export function Header({
           />
         </button>
       </div>
-      <div className="flex-1 relative">
-        <Search
-          className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-            themeMode === "dark" ? "text-gray-500" : "text-gray-400"
-          }`}
-        />
-        <input
-          type="text"
-          placeholder="Tìm kiếm..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={`w-full pl-9 pr-3 py-2 md:py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-sm ${
-            themeMode === "dark"
-              ? "bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:ring-blue-500"
-              : themeMode === "cream"
-              ? "bg-white border-amber-300 text-gray-900 placeholder-gray-400 focus:ring-orange-500"
-              : "bg-gray-100 border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-blue-500"
-          }`}
-        />
-      </div>
+      {/* Search bar - shown on plugins and chat pages */}
+      {(currentPage === "plugins" || currentPage === "chat") && (
+        <div className="flex-1 relative">
+          <Search
+            className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+              themeMode === "dark" ? "text-gray-500" : "text-gray-400"
+            }`}
+          />
+          <input
+            type="text"
+            placeholder={
+              currentPage === "plugins"
+                ? "Tìm kiếm plugins..."
+                : "Tìm kiếm tin nhắn..."
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={`w-full pl-9 pr-3 py-2 md:py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent text-sm ${
+              themeMode === "dark"
+                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:ring-blue-500"
+                : themeMode === "cream"
+                ? "bg-white border-amber-300 text-gray-900 placeholder-gray-400 focus:ring-orange-500"
+                : "bg-gray-100 border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-blue-500"
+            }`}
+          />
+        </div>
+      )}
+      {/* Spacer when search is not shown */}
+      {currentPage !== "plugins" && currentPage !== "chat" && (
+        <div className="flex-1" />
+      )}
       <div className="relative" ref={settingsRef}>
         <button
           onClick={() => setShowSettings(!showSettings)}

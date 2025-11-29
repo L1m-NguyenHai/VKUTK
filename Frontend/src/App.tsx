@@ -73,9 +73,15 @@ function App() {
   const renderContent = () => {
     switch (currentPage) {
       case "chat":
-        return <ChatPage themeMode={themeMode} />;
+        return <ChatPage themeMode={themeMode} searchQuery={searchQuery} />;
       case "plugins":
-        return <PluginsPage themeMode={themeMode} navigateTo={navigateTo} />;
+        return (
+          <PluginsPage
+            themeMode={themeMode}
+            navigateTo={navigateTo}
+            searchQuery={searchQuery}
+          />
+        );
       case "schedule":
         return <SchedulePage themeMode={themeMode} />;
       case "timetable":
@@ -128,6 +134,7 @@ function App() {
                     setIsSidebarCollapsed={setIsSidebarCollapsed}
                     navigateTo={navigateTo}
                     setThemeMode={setThemeMode}
+                    currentPage={currentPage}
                   />
 
                   <div className="flex-1 flex overflow-hidden relative">
