@@ -65,7 +65,7 @@ class ResearchCog(BaseCog):
                 )
             ]
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook/research"
+        self.webhook_url = "https://n8n.group12.cloud/webhook-test/research"
         self.command_history = []
         
     def setup(self):

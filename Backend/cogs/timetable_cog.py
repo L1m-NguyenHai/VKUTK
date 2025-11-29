@@ -82,7 +82,7 @@ class TimetableCog(BaseCog):
                 )
             ]
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook/timetable"
+        self.webhook_url = "https://n8n.group12.cloud/webhook-test/timetable"
         self.command_history = []
         
     def setup(self):
@@ -113,6 +113,8 @@ class TimetableCog(BaseCog):
             
             print(f"[Timetable] Received request from user: {data.auth_userid}")
             print(f"[Timetable] Semester: {data.semester}, Prefer: {data.prefer_time}")
+            print(f"[Timetable] Day preferences: {data.day_preferences}")
+            print(f"[Timetable] Prefer lecturer: {data.prefer_lecturer}")
             
             # Check if cog is enabled
             if not self.is_enabled():
@@ -127,11 +129,16 @@ class TimetableCog(BaseCog):
                 prefer_days = []
                 avoid_days = []
                 if data.day_preferences:
-                    for day, pref in data.day_preferences.items():
-                        if pref == "prefer":
-                            prefer_days.append(day)
-                        elif pref == "avoid":
-                            avoid_days.append(day)
+                    print(f"[Timetable] Processing day_preferences type: {type(data.day_preferences)}")
+                    # Handle if day_preferences is a dict
+                    if isinstance(data.day_preferences, dict):
+                        for day, pref in data.day_preferences.items():
+                            if pref == "prefer":
+                                prefer_days.append(day)
+                            elif pref == "avoid":
+                                avoid_days.append(day)
+                    else:
+                        print(f"[Timetable] Unexpected day_preferences format: {data.day_preferences}")
                 
                 # Prepare payload
                 payload = {
