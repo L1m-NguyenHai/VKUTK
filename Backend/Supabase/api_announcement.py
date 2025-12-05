@@ -41,6 +41,14 @@ def get_newest_unposted_announcement():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/newest-announcement", response_model=Announcement)
+def get_newest_announcement():
+    """Fetch the newest announcement using Database class"""
+    try:
+        return supabase_announcement.get_newest_announcement()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/announcements")
 def create_announcement(announcement: Announcement):
     """Insert a new announcement using Database class"""
