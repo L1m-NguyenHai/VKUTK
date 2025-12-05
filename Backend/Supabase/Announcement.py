@@ -10,7 +10,6 @@ class Announcement:
         response = self.client.rpc("get_newest_unposted_announcement").execute()
         return response.data[0] if response.data else None
         
-
     def get_newest_announcement_date(self) -> str:
         response = self.client.table("announcement").select("date_announced").order("date_announced", desc=True).limit(1).execute()
         return response.data[0] if response.data else None
