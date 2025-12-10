@@ -56,7 +56,7 @@ class ChatCog(BaseCog):
             color="from-blue-500 to-cyan-500",
             commands=[]  # No slash commands - direct chat only
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook/chat"
+        self.webhook_url = "https://n8n.group12.cloud/webhook-test/chat"
         self.chat_history: List[Dict] = []
         
     def setup(self):

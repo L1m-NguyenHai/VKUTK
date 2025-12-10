@@ -392,13 +392,23 @@ async def sign_in(request: SignInRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/auth/signout")
-async def sign_out(access_token: str):
+async def sign_out(authorization: str = Header(None)):
     """
     Sign out user
     """
     try:
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Authorization header required")
+        
+        parts = authorization.split()
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid authorization header format")
+        
+        access_token = parts[1]
         result = auth_repo.sign_out(access_token)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
