@@ -33,11 +33,30 @@ def get_announcements(limit: int = 20):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/announcements/{announcement_id}", response_model=Announcement)
+def get_announcement_by_id(announcement_id: str):
+    """Fetch an announcement by ID using Database class"""
+    try:
+        announcement = supabase_announcement.get_announcement_by_id(announcement_id)
+        if not announcement:
+            raise HTTPException(status_code=404, detail="Announcement not found")
+        return announcement
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/newest-unposted-announcement", response_model=Announcement)
 def get_newest_unposted_announcement():
     """Fetch the newest unposted announcement using Database class"""
     try:
         return supabase_announcement.get_newest_unposted_announcement()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/newest-announcement", response_model=Announcement)
+def get_newest_announcement():
+    """Fetch the newest announcement using Database class"""
+    try:
+        return supabase_announcement.get_newest_announcement()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
