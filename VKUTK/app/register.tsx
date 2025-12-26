@@ -10,17 +10,13 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Dimensions,
-  Image,
   useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
-import { LinearGradient } from "expo-linear-gradient";
 import { Logo } from "../components/ui/Logo";
-
-const { width } = Dimensions.get("window");
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function RegisterScreen() {
   const [username, setUsername] = useState("");
@@ -31,6 +27,9 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { signUp } = useAuth();
   const { width, height } = useWindowDimensions();
+
+  const theme = useTheme();
+  const isDark = theme?.isDark ?? false;
 
   const handleRegister = async () => {
     if (!username || !email || !password) {
@@ -61,16 +60,12 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../assets/images/background.png")}
-        style={[StyleSheet.absoluteFill, { width, height }]}
-        resizeMode="cover"
-      />
-      <LinearGradient
-        colors={["rgba(79, 172, 254, 0.4)", "rgba(0, 242, 254, 0.4)"]}
-        style={StyleSheet.absoluteFill}
-      />
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#111827" : "#F3F4F6" },
+      ]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -83,23 +78,51 @@ export default function RegisterScreen() {
           <View style={styles.contentContainer}>
             {/* Back Button */}
             <TouchableOpacity
-              style={styles.backButton}
+              style={[
+                styles.backButton,
+                { backgroundColor: isDark ? "#374151" : "#E5E7EB" },
+              ]}
               onPress={() => router.back()}
             >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={isDark ? "#FFFFFF" : "#1F2937"}
+              />
             </TouchableOpacity>
 
             {/* Logo Section */}
             <View style={styles.logoSection}>
-              <Logo size={120} />
+              <Logo size={100} />
             </View>
 
-            {/* Floating Island Card */}
-            <View style={styles.islandCard}>
+            {/* Card */}
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
+                  borderColor: isDark ? "#374151" : "#E5E7EB",
+                  borderWidth: 1,
+                },
+              ]}
+            >
               {/* Welcome Section */}
               <View style={styles.welcomeSection}>
-                <Text style={styles.welcomeTitle}>Create Account</Text>
-                <Text style={styles.welcomeSubtitle}>
+                <Text
+                  style={[
+                    styles.welcomeTitle,
+                    { color: isDark ? "#FFFFFF" : "#111827" },
+                  ]}
+                >
+                  Create Account
+                </Text>
+                <Text
+                  style={[
+                    styles.welcomeSubtitle,
+                    { color: isDark ? "#9CA3AF" : "#6B7280" },
+                  ]}
+                >
                   Sign up to get started
                 </Text>
               </View>
@@ -107,17 +130,28 @@ export default function RegisterScreen() {
               {/* Form Section */}
               <View style={styles.formSection}>
                 {/* Username Input */}
-                <View style={styles.inputWrapper}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    {
+                      backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                      borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                    },
+                  ]}
+                >
                   <Ionicons
                     name="person-outline"
-                    size={22}
-                    color="#4facfe"
+                    size={20}
+                    color={isDark ? "#9CA3AF" : "#6B7280"}
                     style={styles.inputIcon}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      { color: isDark ? "#FFFFFF" : "#1F2937" },
+                    ]}
                     placeholder="Username"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
@@ -126,17 +160,28 @@ export default function RegisterScreen() {
                 </View>
 
                 {/* Email Input */}
-                <View style={styles.inputWrapper}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    {
+                      backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                      borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                    },
+                  ]}
+                >
                   <Ionicons
                     name="mail-outline"
-                    size={22}
-                    color="#4facfe"
+                    size={20}
+                    color={isDark ? "#9CA3AF" : "#6B7280"}
                     style={styles.inputIcon}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      { color: isDark ? "#FFFFFF" : "#1F2937" },
+                    ]}
                     placeholder="Email"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -146,17 +191,28 @@ export default function RegisterScreen() {
                 </View>
 
                 {/* Password Input */}
-                <View style={styles.inputWrapper}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    {
+                      backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                      borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                    },
+                  ]}
+                >
                   <Ionicons
                     name="lock-closed-outline"
-                    size={22}
-                    color="#4facfe"
+                    size={20}
+                    color={isDark ? "#9CA3AF" : "#6B7280"}
                     style={styles.inputIcon}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      { color: isDark ? "#FFFFFF" : "#1F2937" },
+                    ]}
                     placeholder="Password"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -169,8 +225,8 @@ export default function RegisterScreen() {
                   >
                     <Ionicons
                       name={showPassword ? "eye-outline" : "eye-off-outline"}
-                      size={22}
-                      color="#9CA3AF"
+                      size={20}
+                      color={isDark ? "#9CA3AF" : "#6B7280"}
                     />
                   </TouchableOpacity>
                 </View>
@@ -178,53 +234,86 @@ export default function RegisterScreen() {
                 {/* Sign Up Button */}
                 <TouchableOpacity
                   style={[
-                    styles.signUpButtonContainer,
+                    styles.signUpButton,
+                    { backgroundColor: isDark ? "#6366F1" : "#4F46E5" },
                     isLoading && styles.signUpButtonDisabled,
                   ]}
                   onPress={handleRegister}
                   disabled={isLoading}
                   activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={["#4facfe", "#00f2fe"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.signUpButton}
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.signUpButtonText}>Sign Up</Text>
-                    )}
-                  </LinearGradient>
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.signUpButtonText}>Sign Up</Text>
+                  )}
                 </TouchableOpacity>
 
                 {/* Divider */}
                 <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>Or sign up with</Text>
-                  <View style={styles.dividerLine} />
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: isDark ? "#374151" : "#E5E7EB" },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.dividerText,
+                      { color: isDark ? "#9CA3AF" : "#6B7280" },
+                    ]}
+                  >
+                    Or sign up with
+                  </Text>
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: isDark ? "#374151" : "#E5E7EB" },
+                    ]}
+                  />
                 </View>
 
                 {/* Social Login Buttons */}
                 <View style={styles.socialButtonsContainer}>
                   <TouchableOpacity
-                    style={styles.socialButton}
+                    style={[
+                      styles.socialButton,
+                      {
+                        backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                        borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                      },
+                    ]}
                     onPress={() => handleSocialLogin("Google")}
                   >
-                    <Ionicons name="logo-google" size={24} color="#DB4437" />
+                    <Ionicons name="logo-google" size={22} color="#DB4437" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.socialButton}
+                    style={[
+                      styles.socialButton,
+                      {
+                        backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                        borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                      },
+                    ]}
                     onPress={() => handleSocialLogin("Facebook")}
                   >
-                    <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+                    <Ionicons name="logo-facebook" size={22} color="#4267B2" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.socialButton}
+                    style={[
+                      styles.socialButton,
+                      {
+                        backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                        borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                      },
+                    ]}
                     onPress={() => handleSocialLogin("Apple")}
                   >
-                    <Ionicons name="logo-apple" size={24} color="#000000" />
+                    <Ionicons
+                      name="logo-apple"
+                      size={22}
+                      color={isDark ? "#FFFFFF" : "#000000"}
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -232,9 +321,23 @@ export default function RegisterScreen() {
 
             {/* Login Link */}
             <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account? </Text>
+              <Text
+                style={[
+                  styles.loginText,
+                  { color: isDark ? "#9CA3AF" : "#6B7280" },
+                ]}
+              >
+                Already have an account?{" "}
+              </Text>
               <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.loginLink}>Sign In</Text>
+                <Text
+                  style={[
+                    styles.loginLink,
+                    { color: isDark ? "#60A5FA" : "#4F46E5" },
+                  ]}
+                >
+                  Sign In
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -259,46 +362,45 @@ const styles = StyleSheet.create({
   contentContainer: {
     alignItems: "center",
     paddingHorizontal: 20,
+    width: "100%",
+    maxWidth: 400,
+    alignSelf: "center",
   },
   backButton: {
     alignSelf: "flex-start",
     marginBottom: 16,
     padding: 8,
     borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   logoSection: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  islandCard: {
+  card: {
     width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 10,
+      height: 4,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-    marginBottom: 20,
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    marginBottom: 24,
   },
   welcomeSection: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   welcomeTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#1F2937",
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 8,
   },
   welcomeSubtitle: {
-    fontSize: 13,
-    color: "#6B7280",
+    fontSize: 14,
   },
   formSection: {
     width: "100%",
@@ -306,68 +408,59 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    marginBottom: 12,
+    borderRadius: 12,
+    marginBottom: 16,
     paddingHorizontal: 16,
-    height: 48,
+    height: 50,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: "#1F2937",
+    fontSize: 15,
     fontWeight: "500",
   },
   eyeIcon: {
     padding: 8,
   },
-  signUpButtonContainer: {
-    borderRadius: 14,
-    overflow: "hidden",
-    shadowColor: "#4facfe",
+  signUpButton: {
+    height: 50,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: 8,
+    shadowColor: "#4F46E5",
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  signUpButton: {
-    height: 48,
-    justifyContent: "center",
-    alignItems: "center",
+    elevation: 4,
   },
   signUpButtonDisabled: {
     opacity: 0.7,
   },
   signUpButtonText: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
-    letterSpacing: 0.5,
   },
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#E5E7EB",
   },
   dividerText: {
     marginHorizontal: 12,
-    color: "#9CA3AF",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "500",
   },
   socialButtonsContainer: {
@@ -376,14 +469,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   socialButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: "#F9FAFB",
+    width: 50,
+    height: 50,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   loginContainer: {
     flexDirection: "row",
@@ -391,13 +482,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loginText: {
-    color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 14,
   },
   loginLink: {
-    color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
-    textDecorationLine: "underline",
   },
 });

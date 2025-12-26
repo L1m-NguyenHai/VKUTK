@@ -83,7 +83,7 @@ export default function SettingsScreen() {
         colors={
           isDark
             ? ["#1a1a2e", "#16213e", "#0f3460"]
-            : ["#667eea", "#764ba2", "#f093fb"]
+            : ["#6366F1", "#8B5CF6", "#f093fb"]
         }
         style={StyleSheet.absoluteFill}
       />
@@ -118,7 +118,7 @@ export default function SettingsScreen() {
           style={styles.profileCard}
         >
           <LinearGradient
-            colors={["#667eea", "#764ba2"]}
+            colors={["#6366F1", "#8B5CF6"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarLarge}
@@ -163,7 +163,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.settingLeft}>
                 <LinearGradient
-                  colors={["#667eea", "#764ba2"]}
+                  colors={["#6366F1", "#8B5CF6"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.iconWrapper}
@@ -214,7 +214,7 @@ export default function SettingsScreen() {
             >
               <View style={styles.settingLeft}>
                 <LinearGradient
-                  colors={["#4facfe", "#00f2fe"]}
+                  colors={["#6366F1", "#8B5CF6"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.iconWrapper}
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
-    shadowColor: "#667eea",
+    shadowColor: "#6366F1",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 16,

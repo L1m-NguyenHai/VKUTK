@@ -8,6 +8,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, model_validator
 from typing import Optional
 import httpx
+import uuid
+import re
+from pathlib import Path
 from datetime import datetime
 from .base_cog import BaseCog, CogMetadata, CommandDefinition, CommandField
 
@@ -136,17 +139,51 @@ class ResearchCog(BaseCog):
                     print(f"[Research] Webhook response status: {response.status_code}")
                     
                     webhook_response = None
-                    try:
-                        response_data = response.json()
-                        # Handle both array and dict responses from n8n
-                        if isinstance(response_data, list) and len(response_data) > 0:
-                            webhook_response = response_data[0]  # Take first item from array
-                        elif isinstance(response_data, dict):
-                            webhook_response = response_data
-                        else:
-                            webhook_response = {"text": str(response_data)}
-                    except:
-                        webhook_response = {"text": response.text}
+                    content_type = response.headers.get("content-type", "").lower()
+                    
+                    if "application/pdf" in content_type:
+                        # Handle PDF response
+                        try:
+                            # Create filename from topic or uuid
+                            safe_topic = re.sub(r'[^\w\-_]', '_', data.topic)[:50]
+                            filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_topic}.pdf"
+                            
+                            # Ensure directory exists
+                            static_dir = Path(__file__).parent.parent / "static" / "research_reports"
+                            static_dir.mkdir(parents=True, exist_ok=True)
+                            
+                            file_path = static_dir / filename
+                            
+                            # Save PDF
+                            with open(file_path, "wb") as f:
+                                f.write(response.content)
+                                
+                            # Construct URL (assuming backend is reachable at same host)
+                            # In production, this should be configured
+                            file_url = f"/static/research_reports/{filename}"
+                            
+                            webhook_response = {
+                                "type": "pdf",
+                                "url": file_url,
+                                "filename": filename,
+                                "message": "Research report generated successfully."
+                            }
+                            print(f"[Research] Saved PDF report to {file_path}")
+                        except Exception as e:
+                            print(f"[Research] Failed to save PDF: {e}")
+                            webhook_response = {"text": "Failed to save research report PDF."}
+                    else:
+                        try:
+                            response_data = response.json()
+                            # Handle both array and dict responses from n8n
+                            if isinstance(response_data, list) and len(response_data) > 0:
+                                webhook_response = response_data[0]  # Take first item from array
+                            elif isinstance(response_data, dict):
+                                webhook_response = response_data
+                            else:
+                                webhook_response = {"text": str(response_data)}
+                        except:
+                            webhook_response = {"text": response.text}
                     
                     print(f"[Research] Parsed webhook_response: {webhook_response}")
                     

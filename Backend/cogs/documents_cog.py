@@ -116,7 +116,7 @@ class DocumentsCog(BaseCog):
                 print(f"[Documents] Payload: {payload}")
                 
                 # Send to n8n webhook
-                async with httpx.AsyncClient(timeout=120.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.webhook_url,
                         json=payload,

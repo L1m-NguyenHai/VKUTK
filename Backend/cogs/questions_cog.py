@@ -83,7 +83,7 @@ class QuestionsCog(BaseCog):
                 )
             ]
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook/questions"
+        self.webhook_url = "https://n8n.group12.cloud/webhook-test/questions"
         self.command_history = []
         
     def setup(self):
@@ -125,77 +125,76 @@ class QuestionsCog(BaseCog):
             }
         
         @self.router.post("/execute", response_model=QuestionsResponse)
-        async def execute_command(
-            request: Request,
-            num_questions: str = Form(default=""),
-            question_relevance: str = Form(default=""),
-            num_open_questions: str = Form(default=""),
-            difficulty_level: str = Form(default=""),
-            auth_userid: str = Form(default="anonymous"),
-            file: UploadFile = File(default=None)
-        ):
+        async def execute_command(request: Request):
             """
             Execute /questions command - Generate questions from PDF
-            
-            Form data:
-            - file: PDF file (REQUIRED)
-            - num_questions: Total number of questions (REQUIRED)
-            - question_relevance: Relevance level (Very High/High/Medium/Low) (REQUIRED)
-            - num_open_questions: Number of open-ended questions (REQUIRED)
-            - difficulty_level: Difficulty level (Easy/Medium/Hard/Very Hard) (REQUIRED)
-            - auth_userid: User identifier (Optional, default: "anonymous")
             
             Returns:
             - success: Whether webhook was sent successfully
             - message: Status message
             - webhook_response: Response from n8n webhook
             """
-            print(f"[Questions] Received execute request: filename={file.filename if file else 'None'}, user={auth_userid}")
+            print("[Questions] Received execute request")
+            
+            # Initialize variables with defaults
+            num_questions = "10"
+            question_relevance = "High"
+            num_open_questions = "0"
+            difficulty_level = "Medium"
+            auth_userid = "anonymous"
+            file = None
+            
             try:
-                # Log form keys and headers for debugging when FormData is used
-                form_keys = []
-                if request.headers:
-                    print(f"[Questions] Request headers: {dict(request.headers)}")
-                # Try to access the form if available (may raise if not multipart)
-                try:
+                content_type = request.headers.get("content-type", "")
+                print(f"[Questions] Content-Type: {content_type}")
+                
+                if "multipart/form-data" in content_type:
                     form = await request.form()
-                    for key in form.keys():
-                        form_keys.append(key)
-                    print(f"[Questions] Received form keys: {form_keys}")
-                except Exception:
-                    print("[Questions] No form data or failed to parse form data")
-            except Exception as _:
-                # Don't block execution on logging failures
-                pass
+                    print(f"[Questions] Form keys: {list(form.keys())}")
+                    
+                    # Helper to safely get string value
+                    def get_str(key, default):
+                        val = form.get(key)
+                        if val is None: return default
+                        return str(val)
+
+                    num_questions = get_str("num_questions", "10")
+                    question_relevance = get_str("question_relevance", "High")
+                    num_open_questions = get_str("num_open_questions", "0")
+                    difficulty_level = get_str("difficulty_level", "Medium")
+                    auth_userid = get_str("auth_userid", "anonymous")
+                    file = form.get("file")
+                    
+                elif "application/json" in content_type:
+                    try:
+                        json_data = await request.json()
+                        print(f"[Questions] JSON data: {json_data}")
+                        
+                        num_questions = str(json_data.get("num_questions", "10"))
+                        question_relevance = str(json_data.get("question_relevance", "High"))
+                        num_open_questions = str(json_data.get("num_open_questions", "0"))
+                        difficulty_level = str(json_data.get("difficulty_level", "Medium"))
+                        auth_userid = str(json_data.get("auth_userid", "anonymous"))
+                    except Exception as e:
+                        print(f"[Questions] Failed to parse JSON: {e}")
+            except Exception as e:
+                print(f"[Questions] Error parsing request: {e}")
+                import traceback
+                traceback.print_exc()
+
             print(f"[Questions] Parameters: num_questions={num_questions}, relevance={question_relevance}, open={num_open_questions}, difficulty={difficulty_level}")
-            print(f"[Questions] Raw parameter values: {repr(num_questions)}, {repr(num_open_questions)}")
-            
-            if not self.is_enabled():
-                print("[Questions] Cog is disabled")
-                raise HTTPException(
-                    status_code=403,
-                    detail="Questions cog is currently disabled"
-                )
             
             try:
+                if not self.is_enabled():
+                    print("[Questions] Cog is disabled")
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Questions cog is currently disabled"
+                    )
+                
                 # Validate required fields with better error messages
                 print(f"[Questions] Validating fields: num_questions='{num_questions}', relevance='{question_relevance}', open='{num_open_questions}', difficulty='{difficulty_level}'")
-                # If the incoming request used JSON (Content-Type: application/json), extract values from JSON body
-                try:
-                    ct = request.headers.get("content-type", "")
-                    if "application/json" in ct:
-                        print("[Questions] Request sent as JSON - trying to parse JSON payload")
-                        try:
-                            json_payload = await request.json()
-                            print(f"[Questions] Parsed JSON payload: {json_payload}")
-                            num_questions = json_payload.get("num_questions", num_questions)
-                            question_relevance = json_payload.get("question_relevance", question_relevance)
-                            num_open_questions = json_payload.get("num_open_questions", num_open_questions)
-                            difficulty_level = json_payload.get("difficulty_level", difficulty_level)
-                        except Exception as e:
-                            print(f"[Questions] Failed to parse JSON payload: {str(e)}")
-                except Exception:
-                    pass
+                
                 # If any required field is missing, provide defaults instead of failing
                 # Defaults: num_questions=10, question_relevance='High', num_open_questions=0, difficulty_level='Medium'
                 if not num_questions or (isinstance(num_questions, str) and not num_questions.strip()):
@@ -287,13 +286,13 @@ class QuestionsCog(BaseCog):
                 
                 # Create multipart form data
                 form_data = {
-                    "num_questions": (None, str(num_q)),
-                    "question_relevance": (None, question_relevance),
-                    "num_open_questions": (None, str(num_open)),
-                    "difficulty_level": (None, difficulty_level),
-                    "auth_userid": (None, auth_userid),
-                    "timestamp": (None, datetime.now().isoformat()),
-                    "source": (None, "VKU Toolkit - Questions"),
+                    "num_questions": str(num_q),
+                    "question_relevance": question_relevance,
+                    "num_open_questions": str(num_open),
+                    "difficulty_level": difficulty_level,
+                    "auth_userid": auth_userid,
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "VKU Toolkit - Questions",
                 }
                 
                 # Add file as binary
@@ -304,7 +303,7 @@ class QuestionsCog(BaseCog):
                 print(f"[Questions] Payload: num_questions={num_q}, relevance={question_relevance}, open={num_open}, difficulty={difficulty_level}, file={file.filename}")
                 
                 # Send to n8n webhook with multipart form data
-                async with httpx.AsyncClient(timeout=300.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.webhook_url,
                         data=form_data,
@@ -421,13 +420,21 @@ class QuestionsCog(BaseCog):
                         )
                         
             except httpx.TimeoutException:
+                print("[Questions] Webhook timeout")
                 raise HTTPException(
                     status_code=504,
-                    detail="Question generation request timed out"
+                    detail="Question generation request timed out (Webhook not responding)"
+                )
+            except httpx.ConnectError as e:
+                print(f"[Questions] Webhook connection failed: {str(e)}")
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Failed to connect to webhook (Is n8n running?): {str(e)}"
                 )
             except httpx.RequestError as e:
+                print(f"[Questions] Webhook request error: {str(e)}")
                 raise HTTPException(
-                    status_code=500,
+                    status_code=502,
                     detail=f"Failed to send webhook: {str(e)}"
                 )
             except Exception as e:

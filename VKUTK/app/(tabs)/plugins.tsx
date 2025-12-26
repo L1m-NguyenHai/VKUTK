@@ -8,6 +8,8 @@ import {
   Switch,
   RefreshControl,
   Animated,
+  ScrollView,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,6 +18,7 @@ import { BlurView } from "expo-blur";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 
 interface Plugin {
   id: string;
@@ -36,8 +39,8 @@ const DEFAULT_PLUGINS: Plugin[] = [
     name: "AI Chat",
     description: "Intelligent conversation assistant",
     icon: "chatbubbles",
-    colors: ["#667eea", "#764ba2"],
-    route: "/(tabs)/chat",
+    colors: ["#6366F1", "#8B5CF6"],
+    route: "/(tabs)",
     enabled: true,
     category: "core",
   },
@@ -55,7 +58,7 @@ const DEFAULT_PLUGINS: Plugin[] = [
     name: "Summarizer",
     description: "Quick document summaries",
     icon: "document-text",
-    colors: ["#4facfe", "#00f2fe"],
+    colors: ["#6366F1", "#8B5CF6"],
     enabled: true,
     category: "tools",
   },
@@ -103,6 +106,24 @@ const DEFAULT_PLUGINS: Plugin[] = [
     colors: ["#ff9a56", "#ff6a88"],
     enabled: false,
     category: "tools",
+  },
+  {
+    id: "chatnlp",
+    name: "NLP Chat",
+    description: "Natural Language Processing",
+    icon: "language",
+    colors: ["#845ec2", "#d65db1"],
+    enabled: false,
+    category: "tools",
+  },
+  {
+    id: "example",
+    name: "Example Plugin",
+    description: "Template for new plugins",
+    icon: "cube",
+    colors: ["#ffc75f", "#f9f871"],
+    enabled: false,
+    category: "utility",
   },
 ];
 
@@ -153,10 +174,31 @@ export default function PluginsScreen() {
     }
   };
 
-  const togglePlugin = (id: string) => {
-    const updated = plugins.map((p) =>
-      p.id === id ? { ...p, enabled: !p.enabled } : p
-    );
+  const togglePlugin = async (id: string) => {
+    const updated = plugins.map((p) => {
+      if (p.id === id) {
+        const newState = !p.enabled;
+
+        // Try to schedule notification, fallback to Alert if it fails (e.g. in Expo Go on Android)
+        try {
+          Notifications.scheduleNotificationAsync({
+            content: {
+              title: newState ? "Plugin Enabled" : "Plugin Disabled",
+              body: `${p.name} has been ${newState ? "enabled" : "disabled"}.`,
+            },
+            trigger: null,
+          }).catch(() => {
+            // Silent catch or fallback
+            // Alert.alert(newState ? "Plugin Enabled" : "Plugin Disabled", `${p.name} has been ${newState ? "enabled" : "disabled"}.`);
+          });
+        } catch (e) {
+          console.log("Notification failed", e);
+        }
+
+        return { ...p, enabled: newState };
+      }
+      return p;
+    });
     setPlugins(updated);
     savePluginStates(updated);
   };
@@ -212,157 +254,139 @@ export default function PluginsScreen() {
           disabled={!item.enabled}
           activeOpacity={0.9}
         >
-          <BlurView
-            intensity={isDark ? 40 : 60}
-            tint={isDark ? "dark" : "light"}
-            style={styles.cardBlur}
+          <View
+            style={[
+              styles.cardContent,
+              { backgroundColor: isDark ? "#1F2937" : "#FFFFFF" },
+            ]}
           >
-            <View style={styles.cardContent}>
-              <View style={styles.cardHeader}>
-                <LinearGradient
-                  colors={item.enabled ? item.colors : ["#78909C", "#90A4AE"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.iconWrapper}
-                >
-                  <Ionicons name={item.icon} size={28} color="#FFFFFF" />
-                </LinearGradient>
-
-                <Switch
-                  value={item.enabled}
-                  onValueChange={() => togglePlugin(item.id)}
-                  trackColor={{
-                    false: isDark ? "#374151" : "#D1D5DB",
-                    true: item.colors[0],
-                  }}
-                  thumbColor="#FFFFFF"
-                  ios_backgroundColor={isDark ? "#374151" : "#D1D5DB"}
-                  style={styles.switch}
-                />
+            <View style={styles.cardHeader}>
+              <View
+                style={[
+                  styles.iconWrapper,
+                  { backgroundColor: item.colors[0] + "20" },
+                ]}
+              >
+                <Ionicons name={item.icon} size={24} color={item.colors[0]} />
               </View>
 
-              <View style={styles.cardBody}>
-                <Text
-                  style={[
-                    styles.pluginName,
-                    {
-                      color: isDark ? "#F3F4F6" : "#1F2937",
-                      opacity: item.enabled ? 1 : 0.5,
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.pluginDesc,
-                    {
-                      color: isDark ? "#9CA3AF" : "#6B7280",
-                      opacity: item.enabled ? 1 : 0.5,
-                    },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {item.description}
-                </Text>
-
-                <View style={styles.categoryBadge}>
-                  <Text
-                    style={[
-                      styles.categoryText,
-                      { color: isDark ? "#9CA3AF" : "#6B7280" },
-                    ]}
-                  >
-                    {item.category}
-                  </Text>
-                </View>
-              </View>
-
-              {item.enabled && item.route && (
-                <View style={styles.arrowIcon}>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={18}
-                    color={isDark ? "#9CA3AF" : "#6B7280"}
-                  />
-                </View>
-              )}
+              <Switch
+                value={item.enabled}
+                onValueChange={() => togglePlugin(item.id)}
+                trackColor={{
+                  false: isDark ? "#374151" : "#D1D5DB",
+                  true: item.colors[0],
+                }}
+                thumbColor="#FFFFFF"
+                ios_backgroundColor={isDark ? "#374151" : "#D1D5DB"}
+                style={styles.switch}
+              />
             </View>
-          </BlurView>
+
+            <View style={styles.cardBody}>
+              <Text
+                style={[
+                  styles.pluginName,
+                  {
+                    color: isDark ? "#F3F4F6" : "#111827",
+                    opacity: item.enabled ? 1 : 0.5,
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {item.name}
+              </Text>
+              <Text
+                style={[
+                  styles.pluginDesc,
+                  {
+                    color: isDark ? "#9CA3AF" : "#6B7280",
+                    opacity: item.enabled ? 1 : 0.5,
+                  },
+                ]}
+                numberOfLines={2}
+              >
+                {item.description}
+              </Text>
+            </View>
+          </View>
         </TouchableOpacity>
       </Animated.View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={
-          isDark
-            ? ["#1a1a2e", "#16213e", "#0f3460"]
-            : ["#667eea", "#764ba2", "#f093fb"]
-        }
-        style={StyleSheet.absoluteFill}
-      />
-
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#111827" : "#F3F4F6" },
+      ]}
+    >
       {/* Header */}
-      <BlurView
-        intensity={80}
-        tint={isDark ? "dark" : "light"}
-        style={[styles.header, { paddingTop: insets.top + 12 }]}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + 10,
+            backgroundColor: isDark ? "#111827" : "#F3F4F6",
+          },
+        ]}
       >
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.headerTitle}>Plugins</Text>
-            <Text style={styles.headerSubtitle}>
-              {enabledCount} of {plugins.length} enabled
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => router.push("/settings")}
+        <View>
+          <Text
+            style={[
+              styles.headerTitle,
+              { color: isDark ? "#FFFFFF" : "#111827" },
+            ]}
           >
-            <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+            Plugins
+          </Text>
+          <Text
+            style={[
+              styles.headerSubtitle,
+              { color: isDark ? "#9CA3AF" : "#6B7280" },
+            ]}
+          >
+            {enabledCount} of {plugins.length} enabled
+          </Text>
         </View>
-      </BlurView>
+      </View>
 
       {/* Category Filter */}
       <View style={styles.categoryFilter}>
-        <BlurView
-          intensity={60}
-          tint={isDark ? "dark" : "light"}
-          style={styles.filterBlur}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {["all", "core", "tools", "utility"].map((cat) => (
             <TouchableOpacity
               key={cat}
               style={[
                 styles.filterButton,
-                selectedCategory === cat && styles.filterButtonActive,
+                selectedCategory === cat && {
+                  backgroundColor: isDark ? "#374151" : "#E5E7EB",
+                },
               ]}
               onPress={() => setSelectedCategory(cat)}
             >
-              {selectedCategory === cat && (
-                <LinearGradient
-                  colors={["#667eea", "#764ba2"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
               <Text
                 style={[
                   styles.filterText,
-                  selectedCategory === cat && styles.filterTextActive,
+                  {
+                    color:
+                      selectedCategory === cat
+                        ? isDark
+                          ? "#FFFFFF"
+                          : "#111827"
+                        : isDark
+                        ? "#9CA3AF"
+                        : "#6B7280",
+                    fontWeight: selectedCategory === cat ? "700" : "500",
+                  },
                 ]}
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
-        </BlurView>
+        </ScrollView>
       </View>
 
       {/* Plugins Grid */}
@@ -381,8 +405,7 @@ export default function PluginsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#FFFFFF"
-            colors={["#667eea"]}
+            tintColor={isDark ? "#FFFFFF" : "#000000"}
           />
         }
       />
@@ -395,65 +418,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
-    paddingBottom: 12,
     paddingHorizontal: 20,
-  },
-  headerContent: {
+    paddingBottom: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    letterSpacing: 0.5,
+    fontWeight: "bold",
   },
   headerSubtitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "rgba(255, 255, 255, 0.7)",
-    marginTop: 2,
-  },
-  settingsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
+    fontSize: 14,
+    marginTop: 4,
   },
   categoryFilter: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  filterBlur: {
-    flexDirection: "row",
-    borderRadius: 16,
-    padding: 4,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
+    marginBottom: 16,
   },
   filterButton: {
-    flex: 1,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: "center",
-    borderRadius: 12,
-    overflow: "hidden",
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 8,
   },
-  filterButtonActive: {},
   filterText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "rgba(255, 255, 255, 0.6)",
-    textTransform: "capitalize",
-  },
-  filterTextActive: {
-    color: "#FFFFFF",
-    fontWeight: "700",
+    fontSize: 14,
   },
   listContent: {
     padding: 16,
@@ -464,67 +454,43 @@ const styles = StyleSheet.create({
   },
   pluginCard: {
     width: "48%",
-  },
-  cardBlur: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardContent: {
     padding: 16,
+    height: 160,
+    justifyContent: "space-between",
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 12,
   },
   iconWrapper: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   switch: {
-    transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }],
+    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
   },
   cardBody: {
-    gap: 6,
+    gap: 4,
   },
   pluginName: {
     fontSize: 16,
     fontWeight: "700",
-    letterSpacing: 0.3,
   },
   pluginDesc: {
     fontSize: 12,
-    lineHeight: 18,
-    fontWeight: "500",
-  },
-  categoryBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    marginTop: 4,
-  },
-  categoryText: {
-    fontSize: 9,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  arrowIcon: {
-    position: "absolute",
-    bottom: 12,
-    right: 12,
+    lineHeight: 16,
   },
 });

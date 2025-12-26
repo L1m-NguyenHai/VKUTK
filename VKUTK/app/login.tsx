@@ -10,17 +10,14 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Dimensions,
-  Image,
   useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
 import { useAuth } from "../contexts/AuthContext";
-import { LinearGradient } from "expo-linear-gradient";
 import { Logo } from "../components/ui/Logo";
-
-const { width, height } = Dimensions.get("window");
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -30,22 +27,49 @@ export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
   const { width, height } = useWindowDimensions();
+  // We might not have access to ThemeContext here if it's wrapped inside the authenticated part,
+  // but usually ThemeProvider wraps the whole app.
+  // If not, we'll default to light mode or check system preference.
+  // Assuming ThemeProvider wraps the root layout.
+
+  // For now, I'll assume we can use useTheme, but if it fails (because context is not available),
+  // I'll fallback to a default style.
+  // Actually, looking at the file structure, `app/_layout.tsx` likely wraps everything.
+
+  // Let's try to use useTheme, but handle if it's not available safely?
+  // No, hooks must be used. I'll assume it's available.
+
+  // Wait, I need to check if I can import useTheme. It was imported in student-info.tsx.
+  // Let's check if I can import it here. Yes.
+
+  const theme = useTheme();
+  const isDark = theme?.isDark ?? false; // Fallback if context is missing (though it shouldn't be)
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
     setIsLoading(true);
     try {
       await signIn(email, password);
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Đăng nhập thành công",
+          body: "Chào mừng bạn quay trở lại!",
+        },
+        trigger: null,
+      });
       router.replace("/(tabs)");
     } catch (error: any) {
-      Alert.alert(
-        "Đăng nhập thất bại",
-        error.message || "Vui lòng kiểm tra lại thông tin"
-      );
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Đăng nhập thất bại",
+          body: error.message || "Vui lòng kiểm tra lại thông tin đăng nhập",
+        },
+        trigger: null,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -56,16 +80,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../assets/images/background.png")}
-        style={[StyleSheet.absoluteFill, { width, height }]}
-        resizeMode="cover"
-      />
-      <LinearGradient
-        colors={["rgba(79, 172, 254, 0.4)", "rgba(0, 242, 254, 0.4)"]}
-        style={StyleSheet.absoluteFill}
-      />
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#111827" : "#F3F4F6" },
+      ]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -78,32 +98,64 @@ export default function LoginScreen() {
           <View style={styles.contentContainer}>
             {/* Logo Section */}
             <View style={styles.logoSection}>
-              <Logo size={120} />
+              <Logo size={100} />
             </View>
 
-            {/* Floating Island Card */}
-            <View style={styles.islandCard}>
+            {/* Card */}
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
+                  borderColor: isDark ? "#374151" : "#E5E7EB",
+                  borderWidth: 1,
+                },
+              ]}
+            >
               {/* Welcome Section */}
               <View style={styles.welcomeSection}>
-                <Text style={styles.welcomeTitle}>Welcome Back</Text>
-                <Text style={styles.welcomeSubtitle}>
+                <Text
+                  style={[
+                    styles.welcomeTitle,
+                    { color: isDark ? "#FFFFFF" : "#111827" },
+                  ]}
+                >
+                  Welcome Back
+                </Text>
+                <Text
+                  style={[
+                    styles.welcomeSubtitle,
+                    { color: isDark ? "#9CA3AF" : "#6B7280" },
+                  ]}
+                >
                   Please sign in to continue
                 </Text>
               </View>
 
               {/* Email Input */}
               <View style={styles.formSection}>
-                <View style={styles.inputWrapper}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    {
+                      backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                      borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                    },
+                  ]}
+                >
                   <Ionicons
                     name="mail-outline"
-                    size={22}
-                    color="#4facfe"
+                    size={20}
+                    color={isDark ? "#9CA3AF" : "#6B7280"}
                     style={styles.inputIcon}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      { color: isDark ? "#FFFFFF" : "#1F2937" },
+                    ]}
                     placeholder="Email"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -113,17 +165,28 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Password Input */}
-                <View style={styles.inputWrapper}>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    {
+                      backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                      borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                    },
+                  ]}
+                >
                   <Ionicons
                     name="lock-closed-outline"
-                    size={22}
-                    color="#4facfe"
+                    size={20}
+                    color={isDark ? "#9CA3AF" : "#6B7280"}
                     style={styles.inputIcon}
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      { color: isDark ? "#FFFFFF" : "#1F2937" },
+                    ]}
                     placeholder="Password"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={isDark ? "#9CA3AF" : "#9CA3AF"}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -136,15 +199,20 @@ export default function LoginScreen() {
                   >
                     <Ionicons
                       name={showPassword ? "eye-outline" : "eye-off-outline"}
-                      size={22}
-                      color="#9CA3AF"
+                      size={20}
+                      color={isDark ? "#9CA3AF" : "#6B7280"}
                     />
                   </TouchableOpacity>
                 </View>
 
                 {/* Forgot Password */}
                 <TouchableOpacity style={styles.forgotPassword}>
-                  <Text style={styles.forgotPasswordText}>
+                  <Text
+                    style={[
+                      styles.forgotPasswordText,
+                      { color: isDark ? "#60A5FA" : "#4F46E5" },
+                    ]}
+                  >
                     Forgot Password?
                   </Text>
                 </TouchableOpacity>
@@ -152,53 +220,86 @@ export default function LoginScreen() {
                 {/* Sign In Button */}
                 <TouchableOpacity
                   style={[
-                    styles.signInButtonContainer,
+                    styles.signInButton,
+                    { backgroundColor: isDark ? "#6366F1" : "#4F46E5" },
                     isLoading && styles.signInButtonDisabled,
                   ]}
                   onPress={handleLogin}
                   disabled={isLoading}
                   activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={["#4facfe", "#00f2fe"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.signInButton}
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.signInButtonText}>Sign In</Text>
-                    )}
-                  </LinearGradient>
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.signInButtonText}>Sign In</Text>
+                  )}
                 </TouchableOpacity>
 
                 {/* Divider */}
                 <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>Or continue with</Text>
-                  <View style={styles.dividerLine} />
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: isDark ? "#374151" : "#E5E7EB" },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.dividerText,
+                      { color: isDark ? "#9CA3AF" : "#6B7280" },
+                    ]}
+                  >
+                    Or continue with
+                  </Text>
+                  <View
+                    style={[
+                      styles.dividerLine,
+                      { backgroundColor: isDark ? "#374151" : "#E5E7EB" },
+                    ]}
+                  />
                 </View>
 
                 {/* Social Login Buttons */}
                 <View style={styles.socialButtonsContainer}>
                   <TouchableOpacity
-                    style={styles.socialButton}
+                    style={[
+                      styles.socialButton,
+                      {
+                        backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                        borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                      },
+                    ]}
                     onPress={() => handleSocialLogin("Google")}
                   >
-                    <Ionicons name="logo-google" size={24} color="#DB4437" />
+                    <Ionicons name="logo-google" size={22} color="#DB4437" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.socialButton}
+                    style={[
+                      styles.socialButton,
+                      {
+                        backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                        borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                      },
+                    ]}
                     onPress={() => handleSocialLogin("Facebook")}
                   >
-                    <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+                    <Ionicons name="logo-facebook" size={22} color="#4267B2" />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.socialButton}
+                    style={[
+                      styles.socialButton,
+                      {
+                        backgroundColor: isDark ? "#374151" : "#F9FAFB",
+                        borderColor: isDark ? "#4B5563" : "#E5E7EB",
+                      },
+                    ]}
                     onPress={() => handleSocialLogin("Apple")}
                   >
-                    <Ionicons name="logo-apple" size={24} color="#000000" />
+                    <Ionicons
+                      name="logo-apple"
+                      size={22}
+                      color={isDark ? "#FFFFFF" : "#000000"}
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -206,9 +307,23 @@ export default function LoginScreen() {
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
+              <Text
+                style={[
+                  styles.signUpText,
+                  { color: isDark ? "#9CA3AF" : "#6B7280" },
+                ]}
+              >
+                Don't have an account?{" "}
+              </Text>
               <TouchableOpacity onPress={() => router.push("/register")}>
-                <Text style={styles.signUpLink}>Create Account</Text>
+                <Text
+                  style={[
+                    styles.signUpLink,
+                    { color: isDark ? "#60A5FA" : "#4F46E5" },
+                  ]}
+                >
+                  Create Account
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -233,39 +348,39 @@ const styles = StyleSheet.create({
   contentContainer: {
     alignItems: "center",
     paddingHorizontal: 20,
+    width: "100%",
+    maxWidth: 400,
+    alignSelf: "center",
   },
   logoSection: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  islandCard: {
+  card: {
     width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 10,
+      height: 4,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-    marginBottom: 20,
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    marginBottom: 24,
   },
   welcomeSection: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   welcomeTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#1F2937",
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 8,
   },
   welcomeSubtitle: {
-    fontSize: 13,
-    color: "#6B7280",
+    fontSize: 14,
   },
   formSection: {
     width: "100%",
@@ -273,21 +388,18 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    marginBottom: 12,
+    borderRadius: 12,
+    marginBottom: 16,
     paddingHorizontal: 16,
-    height: 48,
+    height: 50,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: "#1F2937",
+    fontSize: 15,
     fontWeight: "500",
   },
   eyeIcon: {
@@ -295,54 +407,47 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     alignSelf: "flex-end",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   forgotPasswordText: {
-    color: "#4facfe",
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "600",
   },
-  signInButtonContainer: {
-    borderRadius: 14,
-    overflow: "hidden",
-    shadowColor: "#4facfe",
+  signInButton: {
+    height: 50,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    shadowColor: "#4F46E5",
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
-    marginBottom: 16,
-  },
-  signInButton: {
-    height: 48,
-    justifyContent: "center",
-    alignItems: "center",
+    elevation: 4,
   },
   signInButtonDisabled: {
     opacity: 0.7,
   },
   signInButtonText: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "700",
-    letterSpacing: 0.5,
   },
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#E5E7EB",
   },
   dividerText: {
     marginHorizontal: 12,
-    color: "#9CA3AF",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "500",
   },
   socialButtonsContainer: {
@@ -351,14 +456,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   socialButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: "#F9FAFB",
+    width: 50,
+    height: 50,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   signUpContainer: {
     flexDirection: "row",
@@ -366,13 +469,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   signUpText: {
-    color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 14,
   },
   signUpLink: {
-    color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
-    textDecorationLine: "underline",
   },
 });

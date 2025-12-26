@@ -10,10 +10,22 @@ import "react-native-reanimated";
 import { useFonts } from "expo-font";
 import { Ionicons } from "@expo/vector-icons";
 import * as SplashScreen from "expo-splash-screen";
+import * as Notifications from "expo-notifications";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider as CustomThemeProvider } from "@/contexts/ThemeContext";
+import { TimetableProvider } from "@/contexts/TimetableContext";
+
+// Configure notifications
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -74,6 +86,28 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    async function requestPermissions() {
+      try {
+        const { status: existingStatus } =
+          await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== "granted") {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== "granted") {
+          console.log("Failed to get push token for push notification!");
+          return;
+        }
+      } catch (error) {
+        console.log("Error requesting notification permissions:", error);
+      }
+    }
+
+    requestPermissions();
+  }, []);
+
   if (!loaded) {
     return null;
   }
@@ -81,7 +115,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <CustomThemeProvider>
-        <RootLayoutNav />
+        <TimetableProvider>
+          <RootLayoutNav />
+        </TimetableProvider>
       </CustomThemeProvider>
     </AuthProvider>
   );

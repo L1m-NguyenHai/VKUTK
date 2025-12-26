@@ -185,7 +185,7 @@ class SummaryCog(BaseCog):
                 print(f"[Summary] Payload: message={message[:50]}..., user={auth_userid}, file={file.filename}")
                 
                 # Send to n8n webhook with multipart form data
-                async with httpx.AsyncClient(timeout=300.0) as client:  # Longer timeout for file uploads
+                async with httpx.AsyncClient(timeout=3600.0) as client:  # Longer timeout for file uploads
                     response = await client.post(
                         self.webhook_url,
                         data=form_data,

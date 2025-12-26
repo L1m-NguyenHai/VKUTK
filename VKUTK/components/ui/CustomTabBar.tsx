@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Platform,
   Animated,
-  UIManager,
   TextInput,
   ActivityIndicator,
 } from "react-native";
@@ -18,13 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { useChatInput } from "@/contexts/ChatInputContext";
-
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+import { useNavbar } from "@/contexts/NavbarContext";
 
 export function CustomTabBar({
   state,
@@ -35,70 +28,15 @@ export function CustomTabBar({
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const { inputText, setInputText, sendMessage } = useChatInput();
+  const { isNavbarVisible } = useNavbar();
   const [isLoading, setIsLoading] = React.useState(false);
 
   const currentRoute = state.routes[state.index];
   const isOnChatPage = currentRoute.name === "chat";
 
-  // Transform into chat input on chat page
-  if (isOnChatPage) {
-    return (
-      <View style={[styles.container, { paddingBottom: insets.bottom + 8 }]}>
-        <BlurView
-          intensity={isDark ? 60 : 80}
-          tint={isDark ? "dark" : "light"}
-          style={styles.chatInputContainer}
-        >
-          <View style={styles.chatInputWrapper}>
-            <TouchableOpacity style={styles.attachButton}>
-              <Ionicons
-                name="add-circle"
-                size={28}
-                color={isDark ? "#9CA3AF" : "#6B7280"}
-              />
-            </TouchableOpacity>
-
-            <TextInput
-              style={[
-                styles.chatInput,
-                { color: isDark ? "#F3F4F6" : "#1F2937" },
-              ]}
-              placeholder="Type your message..."
-              placeholderTextColor={isDark ? "#6B7280" : "#9CA3AF"}
-              value={inputText}
-              onChangeText={setInputText}
-              onSubmitEditing={sendMessage}
-              multiline
-              maxLength={500}
-            />
-
-            <TouchableOpacity
-              style={styles.chatSendButton}
-              onPress={sendMessage}
-              disabled={!inputText.trim() || isLoading}
-              activeOpacity={0.7}
-            >
-              <LinearGradient
-                colors={
-                  inputText.trim() && !isLoading
-                    ? ["#667eea", "#764ba2"]
-                    : ["#9CA3AF", "#6B7280"]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.sendButtonGradient}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Ionicons name="send" size={20} color="#FFFFFF" />
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </BlurView>
-      </View>
-    );
+  // Hide navbar on chat page (chat page has its own input) or when toggled off
+  if (isOnChatPage || !isNavbarVisible) {
+    return null;
   }
 
   return (
@@ -140,7 +78,7 @@ export function CustomTabBar({
               >
                 {isFocused ? (
                   <LinearGradient
-                    colors={["#667eea", "#764ba2"]}
+                    colors={["#6366F1", "#8B5CF6"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.activeTab}
@@ -208,7 +146,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#667eea",
+    shadowColor: "#6366F1",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -221,24 +159,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   chatInputContainer: {
-    overflow: "hidden",
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 0,
+    marginBottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 0, 0, 0.1)",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 10,
   },
   chatInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     gap: 10,
   },
   attachButton: {
@@ -252,7 +189,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     maxHeight: 100,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.1)",
   },
   chatSendButton: {
     width: 44,

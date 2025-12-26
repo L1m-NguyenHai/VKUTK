@@ -56,7 +56,7 @@ class ChatCog(BaseCog):
             color="from-blue-500 to-cyan-500",
             commands=[]  # No slash commands - direct chat only
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook-test/chat"
+        self.webhook_url = "https://n8n.group12.cloud/webhook/chat"
         self.chat_history: List[Dict] = []
         
     def setup(self):
@@ -147,7 +147,7 @@ class ChatCog(BaseCog):
                 print(f"[Chat] Payload: message='{request.message[:50]}...', user={request.auth_userid}, conv_id={request.conversation_id}")
                 
                 # Send to n8n webhook
-                async with httpx.AsyncClient(timeout=60.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.webhook_url,
                         json=payload
@@ -333,7 +333,7 @@ class ChatCog(BaseCog):
                     "source": "VKU Toolkit - Chat Test"
                 }
                 
-                async with httpx.AsyncClient(timeout=30.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.webhook_url,
                         json=test_payload
@@ -458,7 +458,7 @@ class ChatCog(BaseCog):
                 
                 print(f"[Chat] Sending to webhook: {self.webhook_url}")
                 
-                async with httpx.AsyncClient(timeout=60.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     # If file is attached, send as multipart, otherwise JSON
                     if file_content:
                         files = {"file": (file.filename, file_content, file.content_type)}
