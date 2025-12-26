@@ -116,7 +116,7 @@ class StackOverflowCog(BaseCog):
                 print(f"[StackOverflow] Payload: {payload}")
                 
                 # Send to n8n webhook
-                async with httpx.AsyncClient(timeout=120.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.webhook_url,
                         json=payload,

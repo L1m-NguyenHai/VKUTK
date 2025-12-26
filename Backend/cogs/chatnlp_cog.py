@@ -140,7 +140,7 @@ class ChatNLPCog(BaseCog):
                 print(f"[ChatNLP] Payload: text='{request.text[:50]}...', user={request.auth_userid}")
                 
                 # Send to NLP API
-                async with httpx.AsyncClient(timeout=30.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.api_url,
                         json=payload
@@ -314,7 +314,7 @@ class ChatNLPCog(BaseCog):
                     "text": "con chó lày"
                 }
                 
-                async with httpx.AsyncClient(timeout=10.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.api_url,
                         json=test_payload

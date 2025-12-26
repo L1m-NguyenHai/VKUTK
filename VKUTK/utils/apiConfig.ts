@@ -24,6 +24,9 @@ export const API_ENDPOINTS = {
     SIGN_OUT: `${API_BASE_URL}/api/auth/signout`,
     GET_USER: `${API_BASE_URL}/api/auth/user`,
   },
+  CHAT: {
+    SEND: `${API_BASE_URL}/api/plugins/chat/send`,
+  },
 
   // Other endpoints can be added here
   STUDENTS: `${API_BASE_URL}/api/students`,

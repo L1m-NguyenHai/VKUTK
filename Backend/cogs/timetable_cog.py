@@ -82,7 +82,7 @@ class TimetableCog(BaseCog):
                 )
             ]
         )
-        self.webhook_url = "https://n8n.group12.cloud/webhook-test/timetable"
+        self.webhook_url = "https://n8n.group12.cloud/webhook/timetable"
         self.command_history = []
         
     def setup(self):
@@ -156,7 +156,7 @@ class TimetableCog(BaseCog):
                 print(f"[Timetable] Payload: {payload}")
                 
                 # Send to n8n webhook
-                async with httpx.AsyncClient(timeout=200.0) as client:
+                async with httpx.AsyncClient(timeout=3600.0) as client:
                     response = await client.post(
                         self.webhook_url,
                         json=payload,
