@@ -140,10 +140,11 @@ class AnnouncementCog(BaseCog):
                     if len(self.command_history) > 100:
                         self.command_history = self.command_history[-100:]
                     
+                    
                     if response.status_code == 200:
                         return AnnouncementResponse(
                             success=True,
-                            message="Command executed successfully",
+                            message=webhook_response.get('message', 'Command executed successfully') if isinstance(webhook_response, dict) else str(webhook_response),
                             data=webhook_response
                         )
                     else:
